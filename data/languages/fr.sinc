@@ -1,8 +1,7 @@
 # All assembly defintions taken from: https://www.fujitsu.com/downloads/MICRO/fma/pdfmcu/CM71-00101-4E.pdf
 
 define endian=big;
-
-define alignment=1;
+define alignment=2;
 
 define space ram type=ram_space size=4 wordsize=1 default;
 define space register type=register_space size=4;
