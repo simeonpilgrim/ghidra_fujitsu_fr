@@ -9,17 +9,19 @@ define space register type=register_space size=4;
 define register offset=0 size=4
 [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
 
-#define register offset=0 size=4
-#[_ _ _ _ _ _ _ _ _ _ _ _ _ ac fp sp];
 
 define register offset=0x0080 size=4 [ mult_addr ];    # Special internal register for dealing with multiple stores/loads
 
-define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh reserved_1];
+define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh];
 
 define register offset=0x200 size=4 
 [ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15];
 
-
+define context ps
+    ilm4=(20,20)
+    s_f=(5,5)
+    i_f=(4,4)
+;
 
 # PS Parts
 @define CCR "ps[0,8]"
@@ -406,7 +408,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + tf_offs*2; ] {
 }
 
 te_reg_i_inc: is te_reg_i=15 { }
-te_reg_i_inc: is te_reg_i { r15 = r15+4;} 
+te_reg_i_inc: is te_reg_i { r15 = r15 + 4; }
 
 #7.60
 :ld "@r15+," te_reg_i is te_opcode=0b000001110000 & te_reg_i & te_reg_i_inc {
@@ -416,20 +418,24 @@ te_reg_i_inc: is te_reg_i { r15 = r15+4;}
 }
 
 #7.61
-:u_ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s unimpl
-#{
-#    te_reg_s = *:4 r15;
-#    r15 = r15+4;
-#    #todo this does not handle SSP or USP case
-#}
+ld_61: "A" is te_reg_s=4 & s_f=0 { }
+ld_61: "B" is te_reg_s=5 & s_f=1 { }
+ld_61: "C" is te_reg_s { r15 = r15 + 4; }
+
+:ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 {
+    te_reg_s = *:4 r15;
+    build ld_61;
+}
 
 #7.62
-:u_ld "@r15+, ps" is tz_opcode=0b0000011110010000 unimpl
-#{
-#    ps = *:4 r15;
-#    r15 = r15 + 4;
-#    # todo flags don't make sense in manual
-#} 
+ld_62: "A" is ilm4=0 { ps = *:4 r15; }
+ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
+
+:ld "@r15+, ps" is tz_opcode=0b0000011110010000 & ld_62
+{
+    build ld_62;
+    r15 = r15 + 4;
+} 
 
 #7.63
 :lduh @^ta_reg_j, ta_reg_i is ta_opcode=0b00000101 & ta_reg_i & ta_reg_j {
@@ -595,7 +601,17 @@ te_reg_i_inc: is te_reg_i { r15 = r15+4;}
 }
 
 #7.91
-:u_int td_x is td_opcode=0b00011111 & td_x unimpl
+:int td_x is td_opcode=0b00011111 & td_x {
+    ssp = ssp - 4;
+    *:4 ssp = ps;
+    ssp = ssp - 4;
+    *:4 ssp = inst_next;
+    $(I_FLAG) = 0;
+    $(S_FLAG) = 0;
+    local ea:4 = tbr + 0x3FC - (td_x * 4);
+    pc = ea;
+    goto [ea];
+}
 
 #7.92
 :u_inte is tz_opcode=0b1001111100110000 unimpl
