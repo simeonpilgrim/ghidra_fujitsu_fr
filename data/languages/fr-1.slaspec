@@ -1,0 +1,4 @@
+
+@define FR_VERSION "1"
+
+@include "fr.sinc"

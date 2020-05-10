@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="FujitsuFR"
+            endian="big"
+            size="32"
+            variant="FR-1"
+            version="1.0"
+            slafile="fr-1.sla"
+            processorspec="fr.pspec"
+            id="Fujitsu:BE:32:FR-1">
+    <description>Fujitsu FR processor 32-bit big-endian</description>
+    <compiler name="default" spec="fr.cspec" id="default"/>
+  </language>
+</language_definitions>
