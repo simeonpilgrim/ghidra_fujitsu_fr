@@ -156,10 +156,8 @@ tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] {
     export tmp;
 }
 
-td_label9: label9 is td_xs [ label9 = inst_next + td_xs*2; ]{
-    local tmp:4 = inst_next + td_xs*2;
-    export tmp;
-}
+td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
+
 
 td_x_u10: u10 is td_x [u10 = td_x*4;] {
     local tmp:4 = td_x*4;
@@ -171,10 +169,7 @@ td_rel: s10 is td_xs [ s10 = td_xs*4; ]{
     export tmp;
 }
 
-tf_label12: label12 is tf_offs [ label12 = inst_next + tf_offs*2; ] {
-    local tmp:4 = inst_next + tf_offs*2;
-    export tmp;
-}
+tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *[ram]:4 label12; }
 
 
 
