@@ -57,6 +57,8 @@ define token instr16(16)
     td_opcode = (8,15)   # 0xFF00
     td_x = (0,7)         # 0x00FF
     td_xs =(0,7) signed  # 0x00FF
+    td_op_a   = (12,15)  # 0xF000
+    td_op_b   = (8,11)   # 0x0F00
 
     te_opcode = (4,15)   # 0xFFF0
     te_reg_i = (0,3)     # 0x000F
@@ -620,22 +622,25 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 :u_reti is tz_opcode=0b1001011100110000 unimpl
 
 #7.94 x16
-:u_bra td_label9 is td_opcode=0b11100000 & td_label9 unimpl
-:u_bno td_label9 is td_opcode=0b11100001 & td_label9 unimpl
-:u_beq td_label9 is td_opcode=0b11100010 & td_label9 unimpl
-:u_bne td_label9 is td_opcode=0b11100011 & td_label9 unimpl
-:u_bc  td_label9 is td_opcode=0b11100100 & td_label9 unimpl
-:u_bnc td_label9 is td_opcode=0b11100101 & td_label9 unimpl
-:u_bn  td_label9 is td_opcode=0b11100110 & td_label9 unimpl
-:u_bp  td_label9 is td_opcode=0b11100111 & td_label9 unimpl
-:u_bv  td_label9 is td_opcode=0b11101000 & td_label9 unimpl
-:u_bnv td_label9 is td_opcode=0b11101001 & td_label9 unimpl
-:u_blt td_label9 is td_opcode=0b11101010 & td_label9 unimpl
-:u_bge td_label9 is td_opcode=0b11101011 & td_label9 unimpl
-:u_ble td_label9 is td_opcode=0b11101100 & td_label9 unimpl
-:u_bgt td_label9 is td_opcode=0b11101101 & td_label9 unimpl
-:u_bls td_label9 is td_opcode=0b11101110 & td_label9 unimpl
-:u_bhi td_label9 is td_opcode=0b11101111 & td_label9 unimpl
+bcc: "bra" is td_op_b=0b0000 & td_label9 { goto td_label9; } 
+bcc: "bno" is td_op_b=0b0001 & td_label9 { } 
+bcc: "beq" is td_op_b=0b0010 & td_label9 { if( $(Z_FLAG)==1 ) goto td_label9; } 
+bcc: "bne" is td_op_b=0b0011 & td_label9 { if( $(Z_FLAG)==0 ) goto td_label9; } 
+bcc: "bc"  is td_op_b=0b0100 & td_label9 { if( $(C_FLAG)==1 ) goto td_label9; } 
+bcc: "bnc" is td_op_b=0b0101 & td_label9 { if( $(C_FLAG)==0 ) goto td_label9; } 
+bcc: "bn"  is td_op_b=0b0110 & td_label9 { if( $(N_FLAG)==1 ) goto td_label9; } 
+bcc: "bp"  is td_op_b=0b0111 & td_label9 { if( $(N_FLAG)==0 ) goto td_label9; } 
+bcc: "bv"  is td_op_b=0b1000 & td_label9 { if( $(V_FLAG)==1 ) goto td_label9; } 
+bcc: "bnv" is td_op_b=0b1001 & td_label9 { if( $(V_FLAG)==0 ) goto td_label9; } 
+bcc: "blt" is td_op_b=0b1010 & td_label9 { if( ($(V_FLAG)^$(N_FLAG))==1 ) goto td_label9; } 
+bcc: "bge" is td_op_b=0b1011 & td_label9 { if( ($(V_FLAG)^$(N_FLAG))==0 ) goto td_label9; } 
+bcc: "ble" is td_op_b=0b1100 & td_label9 { if( (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG))==1 ) goto td_label9; } 
+bcc: "bgt" is td_op_b=0b1101 & td_label9 { if( (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG))==0 ) goto td_label9; } 
+bcc: "bls" is td_op_b=0b1110 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==1 ) goto td_label9; } 
+bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto td_label9; } 
+
+: bcc td_label9 is td_op_a=0b1110 & td_label9 & bcc {  
+}
 
 #7.95
 :jmp^":D" "@"^te_reg_i is te_opcode=0b100111110000 & te_reg_i {
@@ -668,22 +673,10 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 }
 
 #7.99 x16
-:"u_bra:D" td_label9 is td_opcode=0b11110000 & td_label9 unimpl
-:"u_bno:D" td_label9 is td_opcode=0b11110001 & td_label9 unimpl
-:"u_beq:D" td_label9 is td_opcode=0b11110010 & td_label9 unimpl
-:"u_bne:D" td_label9 is td_opcode=0b11110011 & td_label9 unimpl
-:"u_bc:D"  td_label9 is td_opcode=0b11110100 & td_label9 unimpl
-:"u_bnc:D" td_label9 is td_opcode=0b11110101 & td_label9 unimpl
-:"u_bn:D"  td_label9 is td_opcode=0b11110110 & td_label9 unimpl
-:"u_bp:D"  td_label9 is td_opcode=0b11110111 & td_label9 unimpl
-:"u_bv:D"  td_label9 is td_opcode=0b11111000 & td_label9 unimpl
-:"u_bnv:D" td_label9 is td_opcode=0b11111001 & td_label9 unimpl
-:"u_blt:D" td_label9 is td_opcode=0b11111010 & td_label9 unimpl
-:"u_bge:D" td_label9 is td_opcode=0b11111011 & td_label9 unimpl
-:"u_ble:D" td_label9 is td_opcode=0b11111100 & td_label9 unimpl
-:"u_bgt:D" td_label9 is td_opcode=0b11111101 & td_label9 unimpl
-:"u_bls:D" td_label9 is td_opcode=0b11111110 & td_label9 unimpl
-:"u_bhi:D" td_label9 is td_opcode=0b11111111 & td_label9 unimpl
+: bcc^":D" td_label9 is td_op_a=0b1111 & td_label9 & bcc {
+    delayslot(1);
+    build bcc;
+}
 
 
 #7.100
