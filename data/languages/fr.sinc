@@ -600,9 +600,9 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 #7.91
 :int td_x is td_opcode=0b00011111 & td_x {
     ssp = ssp - 4;
-    *:4 ssp = ps;
+    *[ram]:4 ssp = ps;
     ssp = ssp - 4;
-    *:4 ssp = inst_next;
+    *[ram]:4 ssp = inst_next;
     $(I_FLAG) = 0;
     $(S_FLAG) = 0;
     local ea:4 = tbr + 0x3FC - (td_x * 4);
