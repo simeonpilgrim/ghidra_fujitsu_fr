@@ -412,7 +412,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     tc_reg_i = *:4 ea;
 }
 
-te_reg_i_inc: is te_reg_i=15 { }
+te_reg_i_inc: is te_reg_i=15 { r15 = r15; }
 te_reg_i_inc: is te_reg_i { r15 = r15 + 4; }
 
 #7.60
@@ -423,8 +423,8 @@ te_reg_i_inc: is te_reg_i { r15 = r15 + 4; }
 }
 
 #7.61
-ld_61: "A" is te_reg_s=4 & s_f=0 { }
-ld_61: "B" is te_reg_s=5 & s_f=1 { }
+ld_61: "A" is te_reg_s=4 & s_f=0 { r15 = r15; }
+ld_61: "B" is te_reg_s=5 & s_f=1 { r15 = r15; }
 ld_61: "C" is te_reg_s { r15 = r15 + 4; }
 
 :ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 {
@@ -626,7 +626,7 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 
 #7.94 x16
 bcc: "bra" is td_op_b=0b0000 & td_label9 { goto td_label9; } 
-bcc: "bno" is td_op_b=0b0001 & td_label9 { } 
+bcc: "bno" is td_op_b=0b0001 & td_label9 { r0 = r0; } 
 bcc: "beq" is td_op_b=0b0010 & td_label9 { if( $(Z_FLAG)==1 ) goto td_label9; } 
 bcc: "bne" is td_op_b=0b0011 & td_label9 { if( $(Z_FLAG)==0 ) goto td_label9; } 
 bcc: "bc"  is td_op_b=0b0100 & td_label9 { if( $(C_FLAG)==1 ) goto td_label9; } 
