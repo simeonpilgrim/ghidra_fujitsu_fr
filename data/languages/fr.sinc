@@ -172,6 +172,7 @@ td_rel: s10 is td_xs [ s10 = td_xs*4; ]{
 tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *[ram]:4 label12; }
 
 
+tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
 
 
 
@@ -346,22 +347,34 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 :u_div4s is tz_opcode=0b1001111101110000 unimpl
 
 #7.44
-:u_lsl ta_reg_j, ta_reg_i is ta_opcode=0b10110110 & ta_reg_i & ta_reg_j unimpl
+:lsl ta_reg_j, ta_reg_i is ta_opcode=0b10110110 & ta_reg_i & ta_reg_j {
+    ta_reg_i = ta_reg_i << (ta_reg_j[0,4]);
+}
 
 #7.45
-:u_lsl tc_x, tc_reg_i is tc_opcode=0b10110100 & tc_reg_i & tc_x unimpl
+:lsl tc_x, tc_reg_i is tc_opcode=0b10110100 & tc_reg_i & tc_x {
+    tc_reg_i = tc_reg_i << tc_x;
+}
 
 #7.46
-:u_lsl2 tc_x, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x unimpl
+:lsl2 tc_x2, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x2 {
+    tc_reg_i = tc_reg_i << tc_x2;
+}
 
 #7.47
-:u_lsr ta_reg_j, ta_reg_i is ta_opcode=0b10110010 & ta_reg_i & ta_reg_j unimpl
+:lsr ta_reg_j, ta_reg_i is ta_opcode=0b10110010 & ta_reg_i & ta_reg_j {
+    ta_reg_i = ta_reg_i >> ta_reg_j;
+}
 
 #7.48
-:u_lsr tc_x, tc_reg_i is tc_opcode=0b10110000 & tc_reg_i & tc_x unimpl
+:lsr tc_x, tc_reg_i is tc_opcode=0b10110000 & tc_reg_i & tc_x {
+    tc_reg_i = tc_reg_i >> tc_x;
+}
 
 #7.49
-:u_lsr2 tc_x, tc_reg_i is tc_opcode=0b10110001 & tc_reg_i & tc_x unimpl
+:lsr2 tc_x2, tc_reg_i is tc_opcode=0b10110001 & tc_reg_i & tc_x2 {
+    tc_reg_i = tc_reg_i >> tc_x2;
+}
 
 #7.50
 :u_asr ta_reg_j, ta_reg_i is ta_opcode=0b10111010 & ta_reg_i & ta_reg_j unimpl
@@ -785,9 +798,10 @@ td_dir9: dir9 is td_x [dir9 = td_x*2;]{
 #}
 
 #7.116
-:copop tw_u, tw_cc, tw_crj, tw_reg_i is tw_opcode=0b100111111100 & tw_u & tw_cc & tw_crj & tw_reg_i {
-    #SOME co-processor magic.. then
-}
+:u_copop tw_u, tw_cc, tw_crj, tw_reg_i is tw_opcode=0b100111111100 & tw_u & tw_cc & tw_crj & tw_reg_i unimpl
+#{
+#    #SOME co-processor magic.. then
+#}
 
 
 #7.117
