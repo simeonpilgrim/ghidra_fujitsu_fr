@@ -147,23 +147,19 @@ tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{ local tmp:2 = disp9; export tmp; 
 
 tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { export disp10; }
 
-
-td_x_u10: u10 is td_x [u10 = td_x*4;] { export u10; }
+tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
 
 tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { export udisp6; }
+
 td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
 
 td_dir9: dir9 is td_x [dir9 = td_x*2;]{ export dir9; }
 
-
-
+td_x_u10: u10 is td_x [u10 = td_x*4;] { export u10; }
 
 td_rel: s10 is td_xs [ s10 = td_xs*4; ]{ export s10; }
 
 tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *[ram]:4 label12; }
-
-tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
-
 
 
 #7.1
@@ -663,6 +659,7 @@ bcc: "bls" is td_op_b=0b1110 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==1 ) goto t
 bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto td_label9; } 
 
 : bcc td_label9 is td_op_a=0b1110 & td_label9 & bcc {  
+    r0 = r0;
 }
 
 #7.95
