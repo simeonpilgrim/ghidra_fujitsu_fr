@@ -135,6 +135,11 @@ macro resultflags(op1) {       # Set N,Z flag for results
  $(Z_FLAG) = op1 == 0;
 }
 
+macro set_pc(addr) {
+   #local tmp = addr & 0xfffffffe;
+   #pc = tmp;
+   pc = addr;
+}
 
 imm20: val is tx_xh & tx_xl [ val = tx_xl + (tx_xh<<16); ] {
     local tmp:4 = tx_xl + (tx_xh<<16);
@@ -594,28 +599,28 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 
 #7.87
 :jmp @^te_reg_i is te_opcode=0b100101110000 & te_reg_i {
-    pc = te_reg_i;
+    set_pc(te_reg_i);
     goto [pc];
 }
 
 #7.88
 :call tf_label12 is tf_opcode=0b11010 & tf_label12 {
-    rp = pc + 2;
-    pc = tf_label12;
+    rp = inst_next;
+    set_pc(tf_label12);
     call [pc];
 }
 
 #7.89
 :call "@"^te_reg_i is te_opcode=0b100101110001 & te_reg_i {
-    rp = pc + 2;
-    pc = te_reg_i;
+    rp = inst_next;
+    set_pc(te_reg_i);
     call [pc];    
 }
 
 #7.90
 :ret is tz_opcode = 0b1001011100100000 {
-    pc = rp;
-    return [rp];
+    set_pc(rp);
+    return [pc];
 }
 
 #7.91
@@ -627,8 +632,8 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
     $(I_FLAG) = 0;
     $(S_FLAG) = 0;
     local ea:4 = tbr + 0x3FC - (td_x * 4);
-    pc = ea;
-    goto [ea];
+    set_pc(ea);
+    call [pc];
 }
 
 #7.92
@@ -660,32 +665,32 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 
 #7.95
 :jmp^":D" "@"^te_reg_i is te_opcode=0b100111110000 & te_reg_i {
-    pc = te_reg_i;
+    set_pc(te_reg_i);
     delayslot(1);
     goto [pc];
 }
 
 #7.96
 :call^":D" tf_label12 is tf_opcode=0b11011 & tf_label12 {
-    rp = pc + 4;
-    pc = tf_label12;
+    rp = inst_start + 4;
+    set_pc(tf_label12);
     delayslot(1);
     call [pc];
 }
 
 #7.97
 :call^":D" "@"^te_reg_i is te_opcode=0b100111110001 & te_reg_i {
-    rp = pc + 4;
-    pc = te_reg_i;
+    rp = inst_start + 4;
+    set_pc(te_reg_i);
     delayslot(1);
     call [pc];
 }
 
 #7.98
 :ret^":D" is tz_opcode = 0b1001111100100000 {
-    pc = rp;
+    set_pc(rp);
     delayslot(1);
-    return [rp];
+    return [pc];
 }
 
 #7.99 x16
