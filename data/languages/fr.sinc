@@ -17,6 +17,8 @@ define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh];
 define register offset=0x200 size=4 
 [ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15];
 
+define register offset=0x400 size=1 [nop_dummy];
+
 define context ps
     ilm4=(20,20)
     s_f=(5,5)
@@ -117,6 +119,10 @@ attach variables [ te_reg_s ta_reg_s ] [
 attach variables [ tw_crj ] [
     ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15
 ];
+
+
+sp: ssp is s_f=0 & ssp { export ssp; }
+sp: usp is s_f=1 & usp { export usp; }
 
 
 macro addflags(op1, op2) {     # Flags set by add instructions
@@ -423,39 +429,38 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.59
-:ld "@(r15," tc_udisp6^")," tc_reg_i is tc_opcode=0b00000011 & tc_reg_i & tc_udisp6 {
-    local ea:4 = r15 + tc_udisp6;
+:ld "@(r15," tc_udisp6^")," tc_reg_i is tc_opcode=0b00000011 & tc_reg_i & tc_udisp6 & sp {
+    local ea:4 = sp + tc_udisp6;
     tc_reg_i = *:4 ea;
 }
 
-te_reg_i_inc: is te_reg_i=15 { r15 = r15; }
-te_reg_i_inc: is te_reg_i { r15 = r15 + 4; }
+te_reg_i_inc: is te_reg_i=15 { nop_dummy = nop_dummy; }
+te_reg_i_inc: is te_reg_i & sp { sp = sp + 4; }
 
 #7.60
-:ld "@r15+," te_reg_i is te_opcode=0b000001110000 & te_reg_i & te_reg_i_inc {
-    te_reg_i = *:4 r15;
+:ld "@r15+," te_reg_i is te_opcode=0b000001110000 & te_reg_i & te_reg_i_inc & sp {
+    te_reg_i = *:4 sp;
     build te_reg_i_inc;
     #realy not sure this works as expected. TODO test.
 }
 
 #7.61
-ld_61: "A" is te_reg_s=4 & s_f=0 { r15 = r15; }
-ld_61: "B" is te_reg_s=5 & s_f=1 { r15 = r15; }
-ld_61: "C" is te_reg_s { r15 = r15 + 4; }
+ld_61: "A" is te_reg_s=4 & s_f=0 { nop_dummy = nop_dummy; }
+ld_61: "B" is te_reg_s=5 & s_f=1 { nop_dummy = nop_dummy; }
+ld_61: "C" is te_reg_s & sp { sp = sp + 4; }
 
-:ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 {
-    te_reg_s = *:4 r15;
+:ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 & sp {
+    te_reg_s = *:4 sp;
     build ld_61;
 }
 
 #7.62
-ld_62: "A" is ilm4=0 { ps = *:4 r15; }
-ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
+ld_62: "A" is ilm4=0 & sp { ps = *:4 sp; }
+ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
-:ld "@r15+, ps" is tz_opcode=0b0000011110010000 & ld_62
-{
+:ld "@r15+, ps" is tz_opcode=0b0000011110010000 & ld_62 & sp {
     build ld_62;
-    r15 = r15 + 4;
+    sp = sp + 4;
 } 
 
 #7.63
@@ -510,28 +515,28 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 }
 
 #7.72
-:st tc_reg_i, "@(r15," tc_udisp6 ^")" is tc_opcode=0b00010011 & tc_reg_i & tc_udisp6 {
-    local ea:4 = r15 + tc_udisp6;
+:st tc_reg_i, "@(r15," tc_udisp6 ^")" is tc_opcode=0b00010011 & tc_reg_i & tc_udisp6 & sp {
+    local ea:4 = sp + tc_udisp6;
     *:4 ea = tc_reg_i;
 }
 
 #7.73
-:st te_reg_i, "@-r15" is te_opcode = 0b000101110000 & te_reg_i {
+:st te_reg_i, "@-r15" is te_opcode = 0b000101110000 & te_reg_i & sp {
     local tmp = te_reg_i;
-    r15 = r15 - 4;
-    *:4 r15 = tmp;
+    sp = sp - 4;
+    *:4 sp = tmp;
 }
 
 #7.74
-:st te_reg_s, "@-r15" is te_opcode = 0b000101111000 & te_reg_s {
-    r15 = r15 - 4;
-    *:4 r15 = te_reg_s;
+:st te_reg_s, "@-r15" is te_opcode = 0b000101111000 & te_reg_s & sp {
+    sp = sp - 4;
+    *:4 sp = te_reg_s;
 }
 
 #7.75
-:st ps, "@-r15" is tz_opcode = 0b0001011110010000 & ps {
-    r15 = r15 - 4;
-    *:4 r15 = ps;
+:st ps, "@-r15" is tz_opcode = 0b0001011110010000 & ps & sp {
+    sp = sp - 4;
+    *:4 sp = ps;
 }
 
 #7.76
@@ -722,16 +727,16 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 }
 
 #7.104
-:dmov "@"^td_x_u10^", @-r15" is td_opcode=0b00001011 & td_x_u10 {
-    r15 = r15 - 4;  
-    *:4 r15 = *:4 td_x_u10;
+:dmov "@"^td_x_u10^", @-r15" is td_opcode=0b00001011 & td_x_u10 & sp {
+    sp = sp - 4;  
+    *:4 sp = *:4 td_x_u10;
 }
 
 
 #7.105
-:dmov "@r15+, @"^td_x_u10 is td_opcode=0b00011011 & td_x_u10 {
-    *:4 td_x_u10 = *:4 r15;
-    r15 = r15 + 4;
+:dmov "@r15+, @"^td_x_u10 is td_opcode=0b00011011 & td_x_u10 & sp {
+    *:4 td_x_u10 = *:4 sp;
+    sp = sp + 4;
 }
 
 #7.106
@@ -838,8 +843,8 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 :u_stilm td_x is td_opcode=0b10000111 & td_x unimpl
 
 #7.124
-:addsp td_rel is td_opcode=0b10100011 & td_xs & td_rel {
-    r15 = r15 + td_rel;
+:addsp td_rel is td_opcode=0b10100011 & td_xs & td_rel & sp {
+    sp = sp + td_rel;
 }
 
 #7.125
@@ -890,10 +895,10 @@ ld_reg_list_a:  ld_rl_a1        is ld_rl_a1 & td_x0707=0                      { 
 ld_reg_list_a:  r7              is ld_rl_a1 & td_x0707=1 & r7 & td_x0006=0    { ma_push(r7); }
 ld_reg_list_a:  ld_rl_a1^"," r7 is ld_rl_a1 & td_x0707=1 & r7                 { ma_push(r7); }
 
-:ldm0 "("^ld_reg_list_a^")" is td_opcode=0b10001100 & ld_reg_list_a {
-    mult_addr = r15;
+:ldm0 "("^ld_reg_list_a^")" is td_opcode=0b10001100 & ld_reg_list_a & sp {
+    mult_addr = sp;
     build ld_reg_list_a;
-    r15 = mult_addr;
+    sp = mult_addr;
 }
 
 ld_rl_b7: ""                     is td_x0000=0                                 { ma_nop(); }
@@ -916,16 +921,16 @@ ld_rl_b2: ld_rl_b3^"," r13       is ld_rl_b3 & td_x0505=1 & r13                {
 ld_rl_b1: ld_rl_b2               is ld_rl_b2 & td_x0606=0                      { ma_nop(); }
 ld_rl_b1: r14                    is ld_rl_b2 & td_x0606=1 & r14 & td_x0005=0   { ma_push(r14); }
 ld_rl_b1: ld_rl_b2^"," r14       is ld_rl_b2 & td_x0606=1 & r14                { ma_push(r14); }
-ld_reg_list_b:  ld_rl_b1         is ld_rl_b1 & td_x0707=0                      { ma_nop(); }
-ld_reg_list_b:  r15              is ld_rl_b1 & td_x0707=1 & r15 & td_x0006=0   { ma_push(r15); }
-ld_reg_list_b:  ld_rl_b1^"," r15 is ld_rl_b1 & td_x0707=1 & r15                { ma_push(r15); }
+ld_reg_list_b: ld_rl_b1          is ld_rl_b1 & td_x0707=0                      { ma_nop(); }
+ld_reg_list_b: sp                is ld_rl_b1 & td_x0707=1 & sp & td_x0006=0    { ma_push(sp); }
+ld_reg_list_b: ld_rl_b1^"," sp   is ld_rl_b1 & td_x0707=1 & sp                 { ma_push(sp); }
 
 
 #7.130
-:ldm1 "("^ld_reg_list_b^")" is td_opcode=0b10001101 & ld_reg_list_b {
-    mult_addr = r15;
+:ldm1 "("^ld_reg_list_b^")" is td_opcode=0b10001101 & ld_reg_list_b & sp {
+    mult_addr = sp;
     build ld_reg_list_b;
-    r15 = mult_addr;
+    sp = mult_addr;
 }
 
 
@@ -954,14 +959,14 @@ st_reg_list_a:  r0              is st_rl_a1 & td_x0707=1 & r0 & td_x0006=0    { 
 st_reg_list_a:  r0^"," st_rl_a1 is st_rl_a1 & td_x0707=1 & r0                 { ma_push(r0); }
 
 #7.131
-:stm0 "("^st_reg_list_a^")" is td_opcode=0b10001110 & st_reg_list_a {
-    mult_addr = r15;
+:stm0 "("^st_reg_list_a^")" is td_opcode=0b10001110 & st_reg_list_a & sp {
+    mult_addr = sp;
     build st_reg_list_a;
-    r15 = mult_addr;
+    sp = mult_addr;
 }
 
 st_rl_b7: ""                     is td_x0000=0                                 { ma_nop(); }
-st_rl_b7: r15                    is td_x0000=1 & r15                           { ma_push(r15); }
+st_rl_b7: sp                     is td_x0000=1 & sp                            { ma_push(sp); }
 st_rl_b6: st_rl_b7               is st_rl_b7 & td_x0101=0                      { ma_nop(); }
 st_rl_b6: r14                    is st_rl_b7 & td_x0101=1 & r14 & td_x0000=0   { ma_push(r14); }
 st_rl_b6: r14^"," st_rl_b7       is st_rl_b7 & td_x0101=1 & r14                { ma_push(r14); }
@@ -985,25 +990,25 @@ st_reg_list_b:  r8               is st_rl_b1 & td_x0707=1 & r8 & td_x0006=0    {
 st_reg_list_b:  r8^"," st_rl_b1  is st_rl_b1 & td_x0707=1 & r8                 { ma_push(r8); }
 
 #7.132
-:stm1 (^st_reg_list_b^) is td_opcode=0b10001111 & st_reg_list_b {
-    mult_addr = r15;
+:stm1 (^st_reg_list_b^) is td_opcode=0b10001111 & st_reg_list_b & sp {
+    mult_addr = sp;
     build st_reg_list_b;
-    r15 = mult_addr;
+    sp = mult_addr;
 }
 
 
 #7.133
-:enter td_x_u10 is td_opcode=0b00001111 & td_x_u10 {
-    local ea:4 = r15 - 4;
+:enter td_x_u10 is td_opcode=0b00001111 & td_x_u10 & sp {
+    local ea:4 = sp - 4;
     *:4 ea = r14;
     r14 = ea;
-    r15 = r15 - td_x_u10;       
+    sp = sp - td_x_u10;       
 }
 
 #7.134
-:leave is tz_opcode=0b1001111110010000 {
-    r15 = r14 + 4;
-    r14 = *(r15-4);
+:leave is tz_opcode=0b1001111110010000 & sp {
+    sp = r14 + 4;
+    r14 = *(sp-4);
 }
 
 #7.135
