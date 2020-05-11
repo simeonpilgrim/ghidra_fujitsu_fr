@@ -248,10 +248,14 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.14
-:u_and ta_reg_j, ta_reg_i is ta_opcode=0b10000010 & ta_reg_i & ta_reg_j unimpl
+:and ta_reg_j, ta_reg_i is ta_opcode=0b10000010 & ta_reg_i & ta_reg_j {
+    ta_reg_i = ta_reg_i & ta_reg_j;
+}
 
 #7.15
-:u_and ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000100 & ta_reg_i & ta_reg_j unimpl
+:and ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000100 & ta_reg_i & ta_reg_j {
+    *:4 ta_reg_i = ((*ta_reg_i) & ta_reg_j);
+}
 
 #7.16
 :u_andh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000101 & ta_reg_i & ta_reg_j unimpl
@@ -260,10 +264,14 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 :u_andb ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000110 & ta_reg_i & ta_reg_j unimpl
 
 #7.18
-:u_or ta_reg_j, ta_reg_i is ta_opcode=0b10010010 & ta_reg_j & ta_reg_i unimpl
+:or ta_reg_j, ta_reg_i is ta_opcode=0b10010010 & ta_reg_j & ta_reg_i {
+    ta_reg_i = ta_reg_i | ta_reg_j;
+}
 
 #7.19
-:u_or ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010100 & ta_reg_j & ta_reg_i unimpl
+:or ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010100 & ta_reg_j & ta_reg_i {
+    *:4 ta_reg_i = ((*ta_reg_i) | ta_reg_j);
+}
 
 #7.20
 :u_orh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010101 & ta_reg_j & ta_reg_i unimpl
