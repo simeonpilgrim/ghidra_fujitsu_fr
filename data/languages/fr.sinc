@@ -848,71 +848,132 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 }
 
 #7.129
-:u_ldm0 "(reglist)" is td_opcode=0b10001100 & td_x unimpl
+macro ma_nop() { mult_addr = mult_addr; }
+macro ma_push(reg) {mult_addr = mult_addr - 4; *mult_addr = reg; }
+macro ma_pop(reg) { reg = *mult_addr; mult_addr = mult_addr + 4; }
 
-#7.130
-:u_ldm1 "(reglist)" is td_opcode=0b10001101 & td_x unimpl
+ld_rl_a7: ""                    is td_x0000=0                                 { ma_nop(); }
+ld_rl_a7: r0                    is td_x0000=1 & r0                            { ma_push(r0); }
+ld_rl_a6: ld_rl_a7              is ld_rl_a7 & td_x0101=0                      { ma_nop(); }
+ld_rl_a6: r1                    is ld_rl_a7 & td_x0101=1 & r1 & td_x0000=0    { ma_push(r1); }
+ld_rl_a6: ld_rl_a7^"," r1       is ld_rl_a7 & td_x0101=1 & r1                 { ma_push(r1); }
+ld_rl_a5: ld_rl_a6              is ld_rl_a6 & td_x0202=0                      { ma_nop(); }
+ld_rl_a5: r2                    is ld_rl_a6 & td_x0202=1 & r2 & td_x0001=0    { ma_push(r2); }
+ld_rl_a5: ld_rl_a6^"," r2       is ld_rl_a6 & td_x0202=1 & r2                 { ma_push(r2); }
+ld_rl_a4: ld_rl_a5              is ld_rl_a5 & td_x0303=0                      { ma_nop(); }
+ld_rl_a4: r3                    is ld_rl_a5 & td_x0303=1 & r3 & td_x0002=0    { ma_push(r3); }
+ld_rl_a4: ld_rl_a5^"," r3       is ld_rl_a5 & td_x0303=1 & r3                 { ma_push(r3); }
+ld_rl_a3: ld_rl_a4              is ld_rl_a4 & td_x0404=0                      { ma_nop(); }
+ld_rl_a3: r4                    is ld_rl_a4 & td_x0404=1 & r4 & td_x0003=0    { ma_push(r4); }
+ld_rl_a3: ld_rl_a4^"," r4       is ld_rl_a4 & td_x0404=1 & r4                 { ma_push(r4); }
+ld_rl_a2: ld_rl_a3              is ld_rl_a3 & td_x0505=0                      { ma_nop(); }
+ld_rl_a2: r5                    is ld_rl_a3 & td_x0505=1 & r5 & td_x0004=0    { ma_push(r5); }
+ld_rl_a2: ld_rl_a3^"," r5       is ld_rl_a3 & td_x0505=1 & r5                 { ma_push(r5); }
+ld_rl_a1: ld_rl_a2              is ld_rl_a2 & td_x0606=0                      { ma_nop(); }
+ld_rl_a1: r6                    is ld_rl_a2 & td_x0606=1 & r6 & td_x0005=0    { ma_push(r6); }
+ld_rl_a1: ld_rl_a2^"," r6       is ld_rl_a2 & td_x0606=1 & r6                 { ma_push(r6); }
+ld_reg_list_a:  ld_rl_a1        is ld_rl_a1 & td_x0707=0                      { ma_nop(); }
+ld_reg_list_a:  r7              is ld_rl_a1 & td_x0707=1 & r7 & td_x0006=0    { ma_push(r7); }
+ld_reg_list_a:  ld_rl_a1^"," r7 is ld_rl_a1 & td_x0707=1 & r7                 { ma_push(r7); }
 
-
-rl_a7: ""                  is td_x0000=0                              { mult_addr = mult_addr; }
-rl_a7: r7                  is td_x0000=1 & r7                         { mult_addr = mult_addr - 4; *mult_addr = r7; }
-rl_a6: rl_a7               is rl_a7 & td_x0101=0                      { mult_addr = mult_addr; }
-rl_a6: r6                  is rl_a7 & td_x0101=1 & r6 & td_x0000=0    { mult_addr = mult_addr - 4; *mult_addr = r6; }
-rl_a6: r6^"," rl_a7        is rl_a7 & td_x0101=1 & r6                 { mult_addr = mult_addr - 4; *mult_addr = r6; }
-rl_a5: rl_a6               is rl_a6 & td_x0202=0                      { mult_addr = mult_addr; }
-rl_a5: r5                  is rl_a6 & td_x0202=1 & r5 & td_x0001=0    { mult_addr = mult_addr - 4; *mult_addr = r5; }
-rl_a5: r5^"," rl_a6        is rl_a6 & td_x0202=1 & r5                 { mult_addr = mult_addr - 4; *mult_addr = r5; }
-rl_a4: rl_a5               is rl_a5 & td_x0303=0                      { mult_addr = mult_addr; }
-rl_a4: r4                  is rl_a5 & td_x0303=1 & r4 & td_x0002=0    { mult_addr = mult_addr - 4; *mult_addr = r4; }
-rl_a4: r4^"," rl_a5        is rl_a5 & td_x0303=1 & r4                 { mult_addr = mult_addr - 4; *mult_addr = r4; }
-rl_a3: rl_a4               is rl_a4 & td_x0404=0                      { mult_addr = mult_addr; }
-rl_a3: r3                  is rl_a4 & td_x0404=1 & r3 & td_x0003=0    { mult_addr = mult_addr - 4; *mult_addr = r3; }
-rl_a3: r3^"," rl_a4        is rl_a4 & td_x0404=1 & r3                 { mult_addr = mult_addr - 4; *mult_addr = r3; }
-rl_a2: rl_a3               is rl_a3 & td_x0505=0                      { mult_addr = mult_addr; }
-rl_a2: r2                  is rl_a3 & td_x0505=1 & r2 & td_x0004=0    { mult_addr = mult_addr - 4; *mult_addr = r2; }
-rl_a2: r2^"," rl_a3        is rl_a3 & td_x0505=1 & r2                 { mult_addr = mult_addr - 4; *mult_addr = r2; }
-rl_a1: rl_a2               is rl_a2 & td_x0606=0                      { mult_addr = mult_addr; }
-rl_a1: r1                  is rl_a2 & td_x0606=1 & r1 & td_x0005=0    { mult_addr = mult_addr - 4; *mult_addr = r1; }
-rl_a1: r1^"," rl_a2        is rl_a2 & td_x0606=1 & r1                 { mult_addr = mult_addr - 4; *mult_addr = r1; }
-reg_list_a:  rl_a1         is rl_a1 & td_x0707=0                      { mult_addr = mult_addr; }
-reg_list_a:  r0            is rl_a1 & td_x0707=1 & r0 & td_x0006=0    { mult_addr = mult_addr - 4; *mult_addr = r0; }
-reg_list_a:  r0^"," rl_a1  is rl_a1 & td_x0707=1 & r0                 { mult_addr = mult_addr - 4; *mult_addr = r0; }
-
-#7.131
-:stm0 "("^reg_list_a^")" is td_opcode=0b10001110 & reg_list_a {
+:ldm0 "("^ld_reg_list_a^")" is td_opcode=0b10001100 & ld_reg_list_a {
     mult_addr = r15;
-    build reg_list_a;
+    build ld_reg_list_a;
     r15 = mult_addr;
 }
 
-rl_b7: ""                  is td_x0000=0                              { mult_addr = mult_addr; }
-rl_b7: r15                 is td_x0000=1 & r15                        { mult_addr = mult_addr - 4; *mult_addr = r15; }
-rl_b6: rl_b7               is rl_b7 & td_x0101=0                      { mult_addr = mult_addr; }
-rl_b6: r14                 is rl_b7 & td_x0101=1 & r14 & td_x0000=0   { mult_addr = mult_addr - 4; *mult_addr = r14; }
-rl_b6: r14^"," rl_b7       is rl_b7 & td_x0101=1 & r14                { mult_addr = mult_addr - 4; *mult_addr = r14; }
-rl_b5: rl_b6               is rl_b6 & td_x0202=0                      { mult_addr = mult_addr; }
-rl_b5: r13                 is rl_b6 & td_x0202=1 & r13 & td_x0001=0   { mult_addr = mult_addr - 4; *mult_addr = r13; }
-rl_b5: r13^"," rl_b6       is rl_b6 & td_x0202=1 & r13                { mult_addr = mult_addr - 4; *mult_addr = r13; }
-rl_b4: rl_b5               is rl_b5 & td_x0303=0                      { mult_addr = mult_addr; }
-rl_b4: r12                 is rl_b5 & td_x0303=1 & r12 & td_x0002=0   { mult_addr = mult_addr - 4; *mult_addr = r12; }
-rl_b4: r12^"," rl_b5       is rl_b5 & td_x0303=1 & r12                { mult_addr = mult_addr - 4; *mult_addr = r12; }
-rl_b3: rl_b4               is rl_b4 & td_x0404=0                      { mult_addr = mult_addr; }
-rl_b3: r11                 is rl_b4 & td_x0404=1 & r11 & td_x0003=0   { mult_addr = mult_addr - 4; *mult_addr = r11; }
-rl_b3: r11^"," rl_b4       is rl_b4 & td_x0404=1 & r11                { mult_addr = mult_addr - 4; *mult_addr = r11; }
-rl_b2: rl_b3               is rl_b3 & td_x0505=0                      { mult_addr = mult_addr; }
-rl_b2: r10                 is rl_b3 & td_x0505=1 & r10 & td_x0004=0   { mult_addr = mult_addr - 4; *mult_addr = r10; }
-rl_b2: r10^"," rl_b3       is rl_b3 & td_x0505=1 & r10                { mult_addr = mult_addr - 4; *mult_addr = r10; }
-rl_b1: rl_b2               is rl_b2 & td_x0606=0                      { mult_addr = mult_addr; }
-rl_b1: r9                  is rl_b2 & td_x0606=1 & r9 & td_x0005=0    { mult_addr = mult_addr - 4; *mult_addr = r9; }
-rl_b1: r9^"," rl_b2        is rl_b2 & td_x0606=1 & r9                 { mult_addr = mult_addr - 4; *mult_addr = r9; }
-reg_list_b:  rl_b1         is rl_b1 & td_x0707=0                      { mult_addr = mult_addr; }
-reg_list_b:  r8            is rl_b1 & td_x0707=1 & r8 & td_x0006=0    { mult_addr = mult_addr - 4; *mult_addr = r8; }
-reg_list_b:  r8^"," rl_b1  is rl_b1 & td_x0707=1 & r8                 { mult_addr = mult_addr - 4; *mult_addr = r8; }
+ld_rl_b7: ""                     is td_x0000=0                                 { ma_nop(); }
+ld_rl_b7: r8                     is td_x0000=1 & r8                            { ma_push(r8); }
+ld_rl_b6: ld_rl_b7               is ld_rl_b7 & td_x0101=0                      { ma_nop(); }
+ld_rl_b6: r9                     is ld_rl_b7 & td_x0101=1 & r9 & td_x0000=0    { ma_push(r9); }
+ld_rl_b6: ld_rl_b7^"," r9        is ld_rl_b7 & td_x0101=1 & r9                 { ma_push(r9); }
+ld_rl_b5: ld_rl_b6               is ld_rl_b6 & td_x0202=0                      { ma_nop(); }
+ld_rl_b5: r10                    is ld_rl_b6 & td_x0202=1 & r10 & td_x0001=0   { ma_push(r10); }
+ld_rl_b5: ld_rl_b6^"," r10       is ld_rl_b6 & td_x0202=1 & r10                { ma_push(r10); }
+ld_rl_b4: ld_rl_b5               is ld_rl_b5 & td_x0303=0                      { ma_nop(); }
+ld_rl_b4: r11                    is ld_rl_b5 & td_x0303=1 & r11 & td_x0002=0   { ma_push(r11); }
+ld_rl_b4: ld_rl_b5^"," r11       is ld_rl_b5 & td_x0303=1 & r11                { ma_push(r11); }
+ld_rl_b3: ld_rl_b4               is ld_rl_b4 & td_x0404=0                      { ma_nop(); }
+ld_rl_b3: r12                    is ld_rl_b4 & td_x0404=1 & r12 & td_x0003=0   { ma_push(r12); }
+ld_rl_b3: ld_rl_b4^"," r12       is ld_rl_b4 & td_x0404=1 & r12                { ma_push(r12); }
+ld_rl_b2: ld_rl_b3               is ld_rl_b3 & td_x0505=0                      { ma_nop(); }
+ld_rl_b2: r13                    is ld_rl_b3 & td_x0505=1 & r13 & td_x0004=0   { ma_push(r13); }
+ld_rl_b2: ld_rl_b3^"," r13       is ld_rl_b3 & td_x0505=1 & r13                { ma_push(r13); }
+ld_rl_b1: ld_rl_b2               is ld_rl_b2 & td_x0606=0                      { ma_nop(); }
+ld_rl_b1: r14                    is ld_rl_b2 & td_x0606=1 & r14 & td_x0005=0   { ma_push(r14); }
+ld_rl_b1: ld_rl_b2^"," r14       is ld_rl_b2 & td_x0606=1 & r14                { ma_push(r14); }
+ld_reg_list_b:  ld_rl_b1         is ld_rl_b1 & td_x0707=0                      { ma_nop(); }
+ld_reg_list_b:  r15              is ld_rl_b1 & td_x0707=1 & r15 & td_x0006=0   { ma_push(r15); }
+ld_reg_list_b:  ld_rl_b1^"," r15 is ld_rl_b1 & td_x0707=1 & r15                { ma_push(r15); }
+
+
+#7.130
+:ldm1 "("^ld_reg_list_b^")" is td_opcode=0b10001101 & ld_reg_list_b {
+    mult_addr = r15;
+    build ld_reg_list_b;
+    r15 = mult_addr;
+}
+
+
+st_rl_a7: ""                    is td_x0000=0                                 { ma_nop(); }
+st_rl_a7: r7                    is td_x0000=1 & r7                            { ma_push(r7); }
+st_rl_a6: st_rl_a7              is st_rl_a7 & td_x0101=0                      { ma_nop(); }
+st_rl_a6: r6                    is st_rl_a7 & td_x0101=1 & r6 & td_x0000=0    { ma_push(r6); }
+st_rl_a6: r6^"," st_rl_a7       is st_rl_a7 & td_x0101=1 & r6                 { ma_push(r6); }
+st_rl_a5: st_rl_a6              is st_rl_a6 & td_x0202=0                      { ma_nop(); }
+st_rl_a5: r5                    is st_rl_a6 & td_x0202=1 & r5 & td_x0001=0    { ma_push(r5); }
+st_rl_a5: r5^"," st_rl_a6       is st_rl_a6 & td_x0202=1 & r5                 { ma_push(r5); }
+st_rl_a4: st_rl_a5              is st_rl_a5 & td_x0303=0                      { ma_nop(); }
+st_rl_a4: r4                    is st_rl_a5 & td_x0303=1 & r4 & td_x0002=0    { ma_push(r4); }
+st_rl_a4: r4^"," st_rl_a5       is st_rl_a5 & td_x0303=1 & r4                 { ma_push(r4); }
+st_rl_a3: st_rl_a4              is st_rl_a4 & td_x0404=0                      { ma_nop(); }
+st_rl_a3: r3                    is st_rl_a4 & td_x0404=1 & r3 & td_x0003=0    { ma_push(r3); }
+st_rl_a3: r3^"," st_rl_a4       is st_rl_a4 & td_x0404=1 & r3                 { ma_push(r3); }
+st_rl_a2: st_rl_a3              is st_rl_a3 & td_x0505=0                      { ma_nop(); }
+st_rl_a2: r2                    is st_rl_a3 & td_x0505=1 & r2 & td_x0004=0    { ma_push(r2); }
+st_rl_a2: r2^"," st_rl_a3       is st_rl_a3 & td_x0505=1 & r2                 { ma_push(r2); }
+st_rl_a1: st_rl_a2              is st_rl_a2 & td_x0606=0                      { ma_nop(); }
+st_rl_a1: r1                    is st_rl_a2 & td_x0606=1 & r1 & td_x0005=0    { ma_push(r1); }
+st_rl_a1: r1^"," st_rl_a2       is st_rl_a2 & td_x0606=1 & r1                 { ma_push(r1); }
+st_reg_list_a:  st_rl_a1        is st_rl_a1 & td_x0707=0                      { ma_nop(); }
+st_reg_list_a:  r0              is st_rl_a1 & td_x0707=1 & r0 & td_x0006=0    { ma_push(r0); }
+st_reg_list_a:  r0^"," st_rl_a1 is st_rl_a1 & td_x0707=1 & r0                 { ma_push(r0); }
+
+#7.131
+:stm0 "("^st_reg_list_a^")" is td_opcode=0b10001110 & st_reg_list_a {
+    mult_addr = r15;
+    build st_reg_list_a;
+    r15 = mult_addr;
+}
+
+st_rl_b7: ""                     is td_x0000=0                                 { ma_nop(); }
+st_rl_b7: r15                    is td_x0000=1 & r15                           { ma_push(r15); }
+st_rl_b6: st_rl_b7               is st_rl_b7 & td_x0101=0                      { ma_nop(); }
+st_rl_b6: r14                    is st_rl_b7 & td_x0101=1 & r14 & td_x0000=0   { ma_push(r14); }
+st_rl_b6: r14^"," st_rl_b7       is st_rl_b7 & td_x0101=1 & r14                { ma_push(r14); }
+st_rl_b5: st_rl_b6               is st_rl_b6 & td_x0202=0                      { ma_nop(); }
+st_rl_b5: r13                    is st_rl_b6 & td_x0202=1 & r13 & td_x0001=0   { ma_push(r13); }
+st_rl_b5: r13^"," st_rl_b6       is st_rl_b6 & td_x0202=1 & r13                { ma_push(r13); }
+st_rl_b4: st_rl_b5               is st_rl_b5 & td_x0303=0                      { ma_nop(); }
+st_rl_b4: r12                    is st_rl_b5 & td_x0303=1 & r12 & td_x0002=0   { ma_push(r12); }
+st_rl_b4: r12^"," st_rl_b5       is st_rl_b5 & td_x0303=1 & r12                { ma_push(r12); }
+st_rl_b3: st_rl_b4               is st_rl_b4 & td_x0404=0                      { ma_nop(); }
+st_rl_b3: r11                    is st_rl_b4 & td_x0404=1 & r11 & td_x0003=0   { ma_push(r11); }
+st_rl_b3: r11^"," st_rl_b4       is st_rl_b4 & td_x0404=1 & r11                { ma_push(r11); }
+st_rl_b2: st_rl_b3               is st_rl_b3 & td_x0505=0                      { ma_nop(); }
+st_rl_b2: r10                    is st_rl_b3 & td_x0505=1 & r10 & td_x0004=0   { ma_push(r10); }
+st_rl_b2: r10^"," st_rl_b3       is st_rl_b3 & td_x0505=1 & r10                { ma_push(r10); }
+st_rl_b1: st_rl_b2               is st_rl_b2 & td_x0606=0                      { ma_nop(); }
+st_rl_b1: r9                     is st_rl_b2 & td_x0606=1 & r9 & td_x0005=0    { ma_push(r9); }
+st_rl_b1: r9^"," st_rl_b2        is st_rl_b2 & td_x0606=1 & r9                 { ma_push(r9); }
+st_reg_list_b:  st_rl_b1         is st_rl_b1 & td_x0707=0                      { ma_nop(); }
+st_reg_list_b:  r8               is st_rl_b1 & td_x0707=1 & r8 & td_x0006=0    { ma_push(r8); }
+st_reg_list_b:  r8^"," st_rl_b1  is st_rl_b1 & td_x0707=1 & r8                 { ma_push(r8); }
 
 #7.132
-:stm1 (^reg_list_b^) is td_opcode=0b10001111 & reg_list_b {
+:stm1 (^st_reg_list_b^) is td_opcode=0b10001111 & st_reg_list_b {
     mult_addr = r15;
-    build reg_list_b;
+    build st_reg_list_b;
     r15 = mult_addr;
 }
 
