@@ -141,41 +141,26 @@ macro set_pc(addr) {
    pc = addr;
 }
 
-imm20: val is tx_xh & tx_xl [ val = tx_xl + (tx_xh<<16); ] {
-    local tmp:4 = tx_xl + (tx_xh<<16);
-    export tmp;
-}
+imm20: val is tx_xh & tx_xl [ val = tx_xl + (tx_xh<<16); ] { export *[ram]:4 val; }
 
-tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{
-    local tmp:4 = tb_xs*2;
-    export tmp;
-}
+tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{ local tmp:2 = disp9; export tmp; }
 
-tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] {
-    local tmp:4 = tb_xs*4;
-    export tmp;
-}
+tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { export disp10; }
 
-tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] {
-    local tmp:4 = tc_x*4;
-    export tmp;
-}
 
+td_x_u10: u10 is td_x [u10 = td_x*4;] { export u10; }
+
+tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { export udisp6; }
 td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
 
+td_dir9: dir9 is td_x [dir9 = td_x*2;]{ export dir9; }
 
-td_x_u10: u10 is td_x [u10 = td_x*4;] {
-    local tmp:4 = td_x*4;
-    export tmp;
-}
 
-td_rel: s10 is td_xs [ s10 = td_xs*4; ]{
-    local tmp:4 = td_xs*4;
-    export tmp;
-}
+
+
+td_rel: s10 is td_xs [ s10 = td_xs*4; ]{ export s10; }
 
 tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *[ram]:4 label12; }
-
 
 tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
 
@@ -396,7 +381,7 @@ tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
 }
 
 #7.54
-:ldi^":"^20 imm20, tx_reg_i is tx_opcode=0b10011011 & tx_reg_i & tx_xh & tx_xl & imm20
+:ldi^":"^20 imm20, tx_reg_i is tx_opcode=0b10011011 & tx_reg_i & imm20
 {
     tx_reg_i = imm20;
 }
@@ -435,7 +420,7 @@ te_reg_i_inc: is te_reg_i { r15 = r15 + 4; }
 
 #7.60
 :ld "@r15+," te_reg_i is te_opcode=0b000001110000 & te_reg_i & te_reg_i_inc {
-    ri = *:4 r15;
+    te_reg_i = *:4 r15;
     build te_reg_i_inc;
     #realy not sure this works as expected. TODO test.
 }
@@ -473,7 +458,7 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 
 #7.65
 :lduh "@(r14," tb_disp9^")," tb_reg_i is tb_opcode=0b0100 & tb_reg_i & tb_disp9 {
-    local ea:4 = r14 + tb_disp9;
+    local ea:4 = r14 + sext(tb_disp9);
     tb_reg_i = *:2 ea;
 }
 
@@ -551,7 +536,7 @@ ld_62: "B" is ilm4=1 { ps = *:4 r15; ps[20,1] = 1; }
 
 #7.78
 :sth tb_reg_i, "@(r14," tb_disp9 ^")" is tb_opcode=0b0101 & tb_reg_i & tb_disp9 {
-    local ea = r14 + tb_disp9;
+    local ea = r14 + sext(tb_disp9);
     *:2 ea = tb_reg_i[0,16];
 }
 
@@ -708,11 +693,6 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 #7.101
 :dmov "r13, @"^td_x_u10 is td_opcode=0b00011000 & td_x_u10 {
     *:4 td_x_u10 = r13;
-}
-
-td_dir9: dir9 is td_x [dir9 = td_x*2;]{
-    local tmp:4 = td_x*2;
-    export tmp;
 }
 
 #7.102
