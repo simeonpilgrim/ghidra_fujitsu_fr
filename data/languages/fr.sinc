@@ -243,31 +243,51 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.14
 :and ta_reg_j, ta_reg_i is ta_opcode=0b10000010 & ta_reg_i & ta_reg_j {
     ta_reg_i = ta_reg_i & ta_reg_j;
+    resultflags(ta_reg_i);
 }
 
 #7.15
 :and ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000100 & ta_reg_i & ta_reg_j {
-    *:4 ta_reg_i = ((*ta_reg_i) & ta_reg_j);
+    local tmp:4 = (*[ram]:4 ta_reg_i) & ta_reg_j;
+    *[ram]:4 ta_reg_i = tmp;
+    resultflags(tmp);
 }
 
 #7.16
-:u_andh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000101 & ta_reg_i & ta_reg_j unimpl
+:andh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000101 & ta_reg_i & ta_reg_j {
+    local tmp:2 = (*[ram]:2 ta_reg_i) & ta_reg_j:2;
+    *[ram]:2 ta_reg_i = tmp;
+    resultflags(tmp);
+}
 
 #7.17
-:u_andb ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000110 & ta_reg_i & ta_reg_j unimpl
+:andb ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10000110 & ta_reg_i & ta_reg_j  {
+    local tmp:1 = (*[ram]:1 ta_reg_i) & ta_reg_j:1;
+    *[ram]:1 ta_reg_i = tmp;
+    resultflags(tmp);
+}
 
 #7.18
 :or ta_reg_j, ta_reg_i is ta_opcode=0b10010010 & ta_reg_j & ta_reg_i {
-    ta_reg_i = ta_reg_i | ta_reg_j;
+    local tmp:4 = ta_reg_i | ta_reg_j;
+    ta_reg_i = tmp;
+    resultflags(tmp);
 }
 
 #7.19
 :or ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010100 & ta_reg_j & ta_reg_i {
-    *:4 ta_reg_i = ((*ta_reg_i) | ta_reg_j);
+    local tmp:4 = (*ta_reg_i) | ta_reg_j;
+    *:4 ta_reg_i = tmp;
+    resultflags(tmp);
 }
 
 #7.20
-:u_orh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010101 & ta_reg_j & ta_reg_i unimpl
+:orh ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010101 & ta_reg_j & ta_reg_i {
+    local tmp:2 = (*[ram]:2 ta_reg_i) | ta_reg_j:2;
+    *[ram]:2 ta_reg_i = tmp;
+    resultflags(tmp);
+}
+
 
 #7.21
 :u_orb ta_reg_j, "@"^ta_reg_i is ta_opcode=0b10010110 & ta_reg_j & ta_reg_i unimpl
@@ -312,16 +332,15 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.32
 :btstl tc_x, "@"^tc_reg_i is tc_opcode=0b10001000 & tc_reg_i & tc_x {
     local tmp = *[ram]:1 tc_reg_i;
-    $(N_FLAG) = 0;
-    $(Z_FLAG) = ((tc_x & tmp & 0x0F)==0);
+    local res:1 = tc_x & tmp & 0x0F;
+    resultflags(res);
 }
 
 #7.33
 :btsth tc_x, "@"^tc_reg_i is tc_opcode=0b10001001 & tc_reg_i & tc_x {
-    local tmp = *[ram]:1 tc_reg_i;
-    local res = ((tc_x<<4) & tmp & 0xF0);
-    $(N_FLAG) = ((res&0x80)!=0);
-    $(Z_FLAG) = (res==0);
+    local tmp:1 = *[ram]:1 tc_reg_i;
+    local res:1 = (tc_x<<4) & tmp;
+    resultflags(res);
 }
 
 
@@ -357,27 +376,58 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 #7.44
 :lsl ta_reg_j, ta_reg_i is ta_opcode=0b10110110 & ta_reg_i & ta_reg_j {
-    ta_reg_i = ta_reg_i << (ta_reg_j[0,4]);
+    local shift = ta_reg_j[0,4];
+    $(C_FLAG) = (((0x100000000>>shift) & ta_reg_i) != 0) ;
+
+    ta_reg_i = ta_reg_i << shift;
+    
+    resultflags(ta_reg_i);
 }
 
 #7.45
 :lsl tc_x, tc_reg_i is tc_opcode=0b10110100 & tc_reg_i & tc_x {
+    $(C_FLAG) = (((0x100000000>>tc_x) & tc_reg_i) != 0) ;
+    
     tc_reg_i = tc_reg_i << tc_x;
+    
+    resultflags(ta_reg_i); 
 }
 
 #7.46
 :lsl2 tc_x2, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x2 {
+    $(C_FLAG) = (((0x100000000>>tc_x2) & tc_reg_i) != 0) ;
+    
     tc_reg_i = tc_reg_i << tc_x2;
+    
+    resultflags(ta_reg_i); 
 }
 
 #7.47
 :lsr ta_reg_j, ta_reg_i is ta_opcode=0b10110010 & ta_reg_i & ta_reg_j {
+    if(ta_reg_j==0) goto <set_c_zero>;
+        $(C_FLAG) = (1<<(ta_reg_j-1)) & ta_reg_i) != 0) ;
+        goto <set_c_end>;
+    <set_c_zero>
+        $(C_FLAG) = 0;
+    <set_c_end>
+
     ta_reg_i = ta_reg_i >> ta_reg_j;
+    
+    resultflags(ta_reg_i); 
 }
 
 #7.48
 :lsr tc_x, tc_reg_i is tc_opcode=0b10110000 & tc_reg_i & tc_x {
+    if(tc_x==0) goto <set_c_zero>;
+        $(C_FLAG) = (1<<(tc_x-1)) & tc_reg_i) != 0) ;
+        goto <set_c_end>;
+    <set_c_zero>
+        $(C_FLAG) = 0;
+    <set_c_end>
+
     tc_reg_i = tc_reg_i >> tc_x;
+
+    resultflags(tc_reg_i); 
 }
 
 #7.49
