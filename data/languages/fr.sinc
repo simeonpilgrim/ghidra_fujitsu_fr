@@ -311,14 +311,14 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 :u_bandh tc_x, "@"^tc_reg_i is tc_opcode=0b10000001 & tc_reg_i & tc_x unimpl
 
 #7.28
-:u_borl tc_x, "@"^tc_reg_i is tc_opcode=0b10010000 & tc_reg_i & tc_x {
+:borl tc_x, "@"^tc_reg_i is tc_opcode=0b10010000 & tc_reg_i & tc_x {
     local tmp = *[ram]:1 tc_reg_i;
     *[ram]:1 tc_reg_i = (tmp | (tc_x & 0x0F));
 }
 
 
 #7.29
-:u_borh tc_x, "@"^tc_reg_i is tc_opcode=0b10010001 & tc_reg_i & tc_x {
+:borh tc_x, "@"^tc_reg_i is tc_opcode=0b10010001 & tc_reg_i & tc_x {
     local tmp = *[ram]:1 tc_reg_i;
     *[ram]:1 tc_reg_i = (tmp | ((tc_x<<4) & 0xF0));
 }
