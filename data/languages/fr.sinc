@@ -696,7 +696,14 @@ tbr_ptr: tab_ea is td_x [ tab_ea = $(TBR_ADDR) + 0x3FC - (td_x * 4); ] { export 
 :u_inte is tz_opcode=0b1001111100110000 unimpl
 
 #7.93
-:u_reti is tz_opcode=0b1001011100110000 unimpl
+:reti is tz_opcode=0b1001011100110000 & sp {
+    local ptr:4 = *:4 sp;
+    set_pc(ptr);
+    sp = sp + 4;
+    ps = *:4 sp;
+    sp = sp + 4;
+    return [ptr];
+}
 
 #7.94 x16
 bcc: "bra" is td_op_b=0b0000 & td_label9 { goto td_label9; } 
@@ -893,7 +900,12 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 }
 
 #7.123
-:u_stilm td_x is td_opcode=0b10000111 & td_x unimpl
+stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { export val; }
+stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { export val; }
+
+:stilm stilm_ilm is td_opcode=0b10000111 & stilm_ilm {
+    $(ILM) = stilm_ilm;
+}
 
 #7.124
 :addsp td_rel is td_opcode=0b10100011 & td_xs & td_rel & sp {
