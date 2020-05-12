@@ -390,7 +390,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     
     tc_reg_i = tc_reg_i << tc_x;
     
-    resultflags(ta_reg_i); 
+    resultflags(tc_reg_i); 
 }
 
 #7.46
@@ -399,13 +399,13 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     
     tc_reg_i = tc_reg_i << tc_x2;
     
-    resultflags(ta_reg_i); 
+    resultflags(tc_reg_i); 
 }
 
 #7.47
 :lsr ta_reg_j, ta_reg_i is ta_opcode=0b10110010 & ta_reg_i & ta_reg_j {
-    if(ta_reg_j==0) goto <set_c_zero>;
-        $(C_FLAG) = (1<<(ta_reg_j-1)) & ta_reg_i) != 0) ;
+    if( ta_reg_j==0 ) goto <set_c_zero>;
+        $(C_FLAG) = (((1<<(ta_reg_j-1)) & ta_reg_i) != 0) ;
         goto <set_c_end>;
     <set_c_zero>
         $(C_FLAG) = 0;
@@ -418,8 +418,8 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 #7.48
 :lsr tc_x, tc_reg_i is tc_opcode=0b10110000 & tc_reg_i & tc_x {
-    if(tc_x==0) goto <set_c_zero>;
-        $(C_FLAG) = (1<<(tc_x-1)) & tc_reg_i) != 0) ;
+    if( tc_x:1 == 0 ) goto <set_c_zero>;
+        $(C_FLAG) = ( ( (1 << (tc_x - 1) ) & tc_reg_i ) != 0 ) ;
         goto <set_c_end>;
     <set_c_zero>
         $(C_FLAG) = 0;
