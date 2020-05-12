@@ -677,16 +677,19 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.91
-:int td_x is td_opcode=0b00011111 & td_x {
-    ssp = ssp - 4;
-    *[ram]:4 ssp = ps;
-    ssp = ssp - 4;
-    *[ram]:4 ssp = inst_next;
+tbr_ptr: tab_ea is td_x [ tab_ea = $(TBR_ADDR) + 0x3FC - (td_x * 4); ] { export *[ram]:4 tab_ea; }
+
+:int td_x is td_opcode=0b00011111 & td_x & tbr_ptr {
+
+    #ssp = ssp - 4;
+    #*[ram]:4 ssp = ps;
+    #ssp = ssp - 4;
+    #*[ram]:4 ssp = inst_next;
     $(I_FLAG) = 0;
     $(S_FLAG) = 0;
-    local ea:4 = tbr + 0x3FC - (td_x * 4);
-    set_pc(ea);
-    call [pc];
+    set_pc(tbr_ptr);
+    #goto tbr_ptr;
+    call tbr_ptr;
 }
 
 #7.92
