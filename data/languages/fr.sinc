@@ -502,8 +502,8 @@ te_reg_i_inc: is te_reg_i & sp { sp = sp + 4; }
 }
 
 #7.61
-ld_61: "A" is te_reg_s=4 & s_f=0 { nop_dummy = nop_dummy; }
-ld_61: "B" is te_reg_s=5 & s_f=1 { nop_dummy = nop_dummy; }
+ld_61: "A" is te_reg_s=3 & s_f=0 { nop_dummy = nop_dummy; } # ssp
+ld_61: "B" is te_reg_s=4 & s_f=1 { nop_dummy = nop_dummy; } # usp
 ld_61: "C" is te_reg_s & sp { sp = sp + 4; }
 
 :ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 & sp {
