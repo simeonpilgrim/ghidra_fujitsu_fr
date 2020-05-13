@@ -13,17 +13,24 @@ define register offset=0 size=4
 define register offset=0x0080 size=4 [ mult_addr ];    # Special internal register for dealing with multiple stores/loads
 
 define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh];
+define register offset=0x100 size=16 [hack_a hack_b];
 
 define register offset=0x200 size=4 
 [ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15];
 
 define register offset=0x400 size=1 [nop_dummy];
 
-define context ps
-    ilm4=(20,20)
-    s_f=(5,5)
-    i_f=(4,4)
+define context hack_a
+    d0_0=(0,31)
+    d0=(32,35)
+    i_f=(36,36)
+    s_f=(37,37)
+    d6=(38,51)
+    ilm4=(52,52)
+    d21=(53,63)
+    c_tbr=(64,95)
 ;
+
 
 # PS Parts
 @define CCR "ps[0,8]"
@@ -641,7 +648,11 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.85
-:mov ta_reg_i, ta_reg_s is ta_opcode=0b10110011 & ta_reg_i & ta_reg_s {
+pre_mov_85: is ta_reg_s=0 & ta_reg_i [ c_tbr = ta_reg_i; globalset(inst_next,c_tbr); ] {}
+pre_mov_85: is ta_reg_s>0 {}
+
+
+:mov ta_reg_i, ta_reg_s is ta_opcode=0b10110011 & ta_reg_i & ta_reg_s & pre_mov_85 {
     ta_reg_s = ta_reg_i;
 }
 
@@ -677,7 +688,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.91
-tbr_ptr: tab_ea is td_x [ tab_ea = $(TBR_ADDR) + 0x3FC - (td_x * 4); ] { export *[ram]:4 tab_ea; }
+#tbr_ptr: tab_ea is td_x & c_tbr [ tab_ea = c_tbr + 0x3FC - (td_x * 4); ] { export *[ram]:4 tab_ea; }
+tbr_ptr: tab_ea is td_x [ tab_ea = 0xdfc00 + 0x3FC - (td_x * 4); ] { export *[ram]:4 tab_ea; }
 
 :int td_x is td_opcode=0b00011111 & td_x & tbr_ptr {
 
