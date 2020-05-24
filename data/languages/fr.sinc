@@ -408,9 +408,9 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.33
-:btsth tc_x, "@"^tc_reg_i is tc_opcode=0b10001001 & tc_reg_i & tc_x {
-    local tmp:1 = *[ram]:1 tc_reg_i;
-    local res:1 = (tc_x<<4) & tmp;
+:btsth mask, "@"^tc_reg_i is tc_opcode=0b10001001 & tc_reg_i & tc_x [ mask = (tc_x<<4);] {
+    local tmp:2 = zext(*[ram]:1 tc_reg_i);
+    local res:2 = mask & tmp;
     resultflags(res);
 }
 
