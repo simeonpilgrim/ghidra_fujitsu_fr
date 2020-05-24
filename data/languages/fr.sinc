@@ -386,34 +386,64 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 
 #7.34
-:u_mul ta_reg_j, ta_reg_i is ta_opcode=0b10101111 & ta_reg_i & ta_reg_j unimpl
+:mul ta_reg_js, ta_reg_is is ta_opcode=0b10101111 & ta_reg_is & ta_reg_js {
+    local res:8 = sext(ta_reg_is:4) * sext(ta_reg_js:4);
+    resultflags(res);
+    
+    mdl = res[0,32];
+    mdh = res[32,32];
+    $(V_FLAG) = (mdh != 0) && (mdh != 0xffffffff); 
+}
 
 #7.35
-:u_mulu ta_reg_j, ta_reg_i is ta_opcode=0b10101011 & ta_reg_i & ta_reg_j unimpl
+:mulu ta_reg_j, ta_reg_i is ta_opcode=0b10101011 & ta_reg_i & ta_reg_j {
+    local res:8 = zext(ta_reg_i) * zext(ta_reg_j);
+    resultflags(res);
+    
+    mdl = res[0,32];
+    mdh = res[32,32];
+    $(V_FLAG) = mdh != 0;
+}
 
 #7.36
-:u_mulh ta_reg_j, ta_reg_i is ta_opcode=0b10111111 & ta_reg_i & ta_reg_j unimpl
+:mulh ta_reg_js, ta_reg_is is ta_opcode=0b10111111 & ta_reg_is & ta_reg_js {
+    local res:4 = sext(ta_reg_is:2) * sext(ta_reg_js:2);
+    resultflags(res);
+    mdl = res;
+}
 
 #7.37
-:u_muluh ta_reg_j, ta_reg_i is ta_opcode=0b10111011 & ta_reg_i & ta_reg_j unimpl
+:muluh ta_reg_j, ta_reg_i is ta_opcode=0b10111011 & ta_reg_i & ta_reg_j 
+{
+    local res:4 = zext(ta_reg_i:2) * zext(ta_reg_j:2);
+    resultflags(res);
+    mdl = res;
+}
 
 #7.38
-:u_div0 te_reg_i is te_opcode=0b100101110100 & te_reg_i unimpl
+:div0s te_reg_is is te_opcode=0b100101110100 & te_reg_is {
+    local num:4 = mdl;
+    mdl = num s/ te_reg_is;
+    mdh = num s% te_reg_is;    
+}
 
 #7.39
-:u_div0u te_reg_i is te_opcode=0b100101110101 & te_reg_i unimpl
+:div0u te_reg_i is te_opcode=0b100101110101 & te_reg_i {
+    local num:4 = mdl;
+    mdl = num / te_reg_i;
+    mdh = num % te_reg_i;   }
 
 #7.40
-:u_div1 te_reg_i is te_opcode=0b100101110110 & te_reg_i unimpl
+:div1 te_reg_i is te_opcode=0b100101110110 & te_reg_i { nop_dummy = nop_dummy; }
 
 #7.41
-:u_div2 te_reg_i is te_opcode=0b100101110111 & te_reg_i unimpl
+:div2 te_reg_i is te_opcode=0b100101110111 & te_reg_i { nop_dummy = nop_dummy; }
 
 #7.42
-:u_div3 is tz_opcode=0b1001111101100000 unimpl
+:div3 is tz_opcode=0b1001111101100000 { nop_dummy = nop_dummy; }
 
 #7.43
-:u_div4s is tz_opcode=0b1001111101110000 unimpl
+:div4s is tz_opcode=0b1001111101110000 { nop_dummy = nop_dummy; }
 
 #7.44
 :lsl ta_reg_j, ta_reg_i is ta_opcode=0b10110110 & ta_reg_i & ta_reg_j {
