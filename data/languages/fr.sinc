@@ -792,7 +792,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 :call tf_label12 is tf_opcode=0b11010 & tf_label12 {
     rp = inst_next;
     set_pc(tf_label12);
-    call [pc];
+    call tf_label12;
 }
 
 #7.89
@@ -869,7 +869,7 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
     rp = inst_start + 4;
     set_pc(tf_label12);
     delayslot(1);
-    call [pc];
+    call tf_label12;
 }
 
 #7.97
