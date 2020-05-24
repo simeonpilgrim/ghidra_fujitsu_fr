@@ -182,8 +182,6 @@ tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{ local tmp:2 = disp9; export tmp; 
 
 tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { export disp10; }
 
-tc_x2: x2 is tc_x [ x2 = tc_x * 2; ] { export x2; }
-
 tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { export udisp6; }
 
 td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
@@ -495,45 +493,53 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.46
-:lsl2 tc_x2, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x2 {
-    $(C_FLAG) = (((0x100000000>>tc_x2) & tc_reg_i) != 0) ;
+:lsl2 xp16, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x [ xp16 = tc_x + 16; ] {
+    $(C_FLAG) = (((0x100000000>>xp16) & tc_reg_i) != 0) ;
     
-    tc_reg_i = tc_reg_i << tc_x2;
+    tc_reg_i = tc_reg_i << xp16;
     
     resultflags(tc_reg_i); 
 }
 
 #7.47
 :lsr ta_reg_j, ta_reg_i is ta_opcode=0b10110010 & ta_reg_i & ta_reg_j {
-    if( ta_reg_j==0 ) goto <set_c_zero>;
-        $(C_FLAG) = (((1<<(ta_reg_j-1)) & ta_reg_i) != 0) ;
-        goto <set_c_end>;
-    <set_c_zero>
-        $(C_FLAG) = 0;
-    <set_c_end>
+    local mask:4 = 0;
+    local shift:4 = ta_reg_j & 0x1f;
+    if( shift == 0 ) goto <skip_mask_set>;
+        mask = 1 << (shift - 1);
+    <skip_mask_set>
+    $(C_FLAG) = ( mask & ta_reg_i ) != 0;
 
-    ta_reg_i = ta_reg_i >> ta_reg_j;
+    ta_reg_i = ta_reg_i >> shift;
     
     resultflags(ta_reg_i); 
 }
 
 #7.48
 :lsr tc_x, tc_reg_i is tc_opcode=0b10110000 & tc_reg_i & tc_x {
-    if( tc_x:1 == 0 ) goto <set_c_zero>;
-        $(C_FLAG) = ( ( (1 << (tc_x - 1) ) & tc_reg_i ) != 0 ) ;
-        goto <set_c_end>;
-    <set_c_zero>
-        $(C_FLAG) = 0;
-    <set_c_end>
+	local mask:4 = 0;
+    local shift:4 = tc_x & 0x1f;
+    if( shift == 0 ) goto <skip_mask_set>;
+        mask = 1 << (shift - 1);
+    <skip_mask_set>
+    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
 
-    tc_reg_i = tc_reg_i >> tc_x;
+    tc_reg_i = tc_reg_i >> shift;
 
     resultflags(tc_reg_i); 
 }
 
 #7.49
-:lsr2 tc_x2, tc_reg_i is tc_opcode=0b10110001 & tc_reg_i & tc_x2 {
-    tc_reg_i = tc_reg_i >> tc_x2;
+:lsr2 xp16, tc_reg_i is tc_opcode=0b10110001 & tc_reg_i & tc_x [ xp16 = tc_x + 16; ] {
+	local mask:4 = 0;
+    local shift:4 = xp16 & 0x1f;
+    if( shift == 0 ) goto <skip_mask_set>;
+        mask = 1 << (shift - 1);
+    <skip_mask_set>
+    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
+
+    tc_reg_i = tc_reg_i >> shift;
+	resultflags(tc_reg_i); 
 }
 
 #7.50
@@ -563,9 +569,9 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.52
-:asr2 tc_x, tc_reg_is is tc_opcode=0b10111001 & tc_reg_is & tc_x {
+:asr2 xp16, tc_reg_is is tc_opcode=0b10111001 & tc_reg_is & tc_x [ xp16 = tc_x + 16; ] {
     local mask:4 = 0;
-    local shift = (tc_x + 16)  & 0x1f;
+    local shift = xp16  & 0x1f;
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
