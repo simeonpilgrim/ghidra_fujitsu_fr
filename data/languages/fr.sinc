@@ -177,7 +177,6 @@ macro set_pc(addr) {
    pc = addr;
 }
 
-imm20: val is tx_xh & tx_xl [ val = tx_xl + (tx_xh<<16); ] { export *[ram]:4 val; }
 
 tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{ local tmp:2 = disp9; export tmp; }
 
@@ -582,7 +581,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.54
-:ldi^":"^20 imm20, tx_reg_i is tx_opcode=0b10011011 & tx_reg_i & imm20
+:ldi^":"^20 imm20, tx_reg_i is tx_opcode=0b10011011 & tx_reg_i & tx_xl & tx_xh [ imm20 = tx_xl + (tx_xh<<16); ]
 {
     tx_reg_i = imm20;
 }
