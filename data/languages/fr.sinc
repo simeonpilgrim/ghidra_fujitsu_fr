@@ -392,13 +392,13 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.30
 :beorl tc_x, "@"^tc_reg_i is tc_opcode=0b10011000 & tc_reg_i & tc_x {
     local tmp = *[ram]:1 tc_reg_i;
-    local res:1 = tc_x ^ tmp;
+    *[ram]:1 tc_reg_i = tc_x ^ tmp;
 }
 
 #7.31
 :beorh tc_x, "@"^tc_reg_i is tc_opcode=0b10011001 & tc_reg_i & tc_x {
     local tmp = *[ram]:1 tc_reg_i;
-    local res:1 = (tc_x<<4) ^ tmp;
+    *[ram]:1 tc_reg_i = (tc_x<<4) ^ tmp;
 }
 
 #7.32
