@@ -836,7 +836,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 #7.94 x16
 bcc: "bra" is td_op_b=0b0000 & td_label9 { goto td_label9; } 
-bcc: "bno" is td_op_b=0b0001 & td_label9 { r0 = r0; } 
+bcc: "bno" is td_op_b=0b0001 & td_label9 { } 
 bcc: "beq" is td_op_b=0b0010 & td_label9 { if( $(Z_FLAG)==1 ) goto td_label9; } 
 bcc: "bne" is td_op_b=0b0011 & td_label9 { if( $(Z_FLAG)==0 ) goto td_label9; } 
 bcc: "bc"  is td_op_b=0b0100 & td_label9 { if( $(C_FLAG)==1 ) goto td_label9; } 
@@ -853,7 +853,7 @@ bcc: "bls" is td_op_b=0b1110 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==1 ) goto t
 bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto td_label9; } 
 
 : bcc td_label9 is td_op_a=0b1110 & td_label9 & bcc {  
-    r0 = r0;
+    build bcc;
 }
 
 #7.95
@@ -887,11 +887,22 @@ bcc: "bhi" is td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto t
 }
 
 #7.99 x16
-: bcc^":D" td_label9 is td_op_a=0b1111 & td_label9 & bcc {
-    delayslot(1);
-    build bcc;
-}
-
+:bra^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0000 & td_label9 { goto td_label9; } 
+:bno^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0001 & td_label9 { } 
+:beq^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0010 & td_label9 { tmp = $(Z_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bne^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0011 & td_label9 { tmp = $(Z_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0100 & td_label9 { tmp = $(C_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bnc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0101 & td_label9 { tmp = $(C_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bn^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0110 & td_label9 { tmp = $(N_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bp^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0111 & td_label9 { tmp = $(N_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1000 & td_label9 { tmp = $(V_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bnv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1001 & td_label9 { tmp = $(V_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:blt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1010 & td_label9 { tmp = ($(V_FLAG)^$(N_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bge^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1011 & td_label9 { tmp = ($(V_FLAG)^$(N_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:ble^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1100 & td_label9 { tmp = (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bgt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1101 & td_label9 { tmp = (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bls^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1110 & td_label9 { tmp = ($(C_FLAG)|$(Z_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bhi^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1111 & td_label9 { tmp = ($(C_FLAG)|$(Z_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
 
 #7.100
 :dmov "@"^td_x_u10, "r13" is td_opcode=0b00001000 & td_x_u10 {
