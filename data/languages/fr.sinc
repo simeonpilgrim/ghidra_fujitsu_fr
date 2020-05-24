@@ -46,6 +46,7 @@ define context ps
 define token instr16(16)
     ta_opcode = (8, 15)  # 0xFF00
     ta_reg_j = (4,7)     # 0x00F0
+    ta_reg_js = (4,7) signed # 0x00F0
     ta_reg_s = (4,7)     # 0x00F0 dedicated register Rs
     ta_reg_i = (0,3)     # 0x000F
     ta_reg_is = (0,3) signed # 0x000F
@@ -69,6 +70,7 @@ define token instr16(16)
 
     te_opcode = (4,15)   # 0xFFF0
     te_reg_i = (0,3)     # 0x000F
+    te_reg_is = (0,3) signed # 0x000F
     te_reg_s = (0,3)     # 0x000F
 
     tf_opcode = (11,15)  # 0xF800
@@ -146,6 +148,29 @@ macro resultflags(op1) {       # Set N,Z flag for results
  $(Z_FLAG) = op1 == 0;
 }
 
+#borrowed from ia.sinc
+macro addCarryFlags(op1, op2) {
+	local CFcopy = zext($(C_FLAG));
+	$(C_FLAG) = carry(op1, op2);
+	$(V_FLAG) = scarry(op1, op2);
+	local result = op1 + op2;
+	$(C_FLAG) = $(C_FLAG) || carry( result, CFcopy );
+	$(V_FLAG) = $(V_FLAG) ^^ scarry( result, CFcopy );
+    op1 = result + CFcopy;
+}
+
+#borrowed from ia.sinc
+macro subCarryFlags ( op1, op2 ) {
+	local CFcopy = zext($(C_FLAG));
+	$(C_FLAG) = op1 < op2;
+	$(V_FLAG) = sborrow( op1, op2 );
+	local result = op1 - op2;
+	$(C_FLAG) = $(C_FLAG) || (result < CFcopy);
+	$(V_FLAG) = $(V_FLAG) ^^ sborrow( result, CFcopy );
+	op1 = result - CFcopy;
+}
+
+
 macro set_pc(addr) {
    #local tmp = addr & 0xfffffffe;
    #pc = tmp;
@@ -195,7 +220,11 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.4 
-:u_addc ta_reg_j, ta_reg_i is ta_opcode=0b10100111 & ta_reg_i & ta_reg_j unimpl
+:addc ta_reg_j, ta_reg_i is ta_opcode=0b10100111 & ta_reg_i & ta_reg_j {
+    addCarryFlags(ta_reg_i, ta_reg_j);
+    resultflags(ta_reg_i);
+}
+    
 
 #7.5
 :addn ta_reg_j, ta_reg_i is ta_opcode=0b10100010 & ta_reg_i & ta_reg_j {
@@ -218,13 +247,15 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.8
 :sub ta_reg_j, ta_reg_i is ta_opcode=0b10101100 & ta_reg_i & ta_reg_j {
     subflags(ta_reg_i, ta_reg_j);
-    local tmp:4 = ta_reg_i - ta_reg_j;
-    resultflags(tmp);
-    ta_reg_i = tmp;
+    ta_reg_i = ta_reg_i - ta_reg_j;
+    resultflags(ta_reg_i);
 }
 
 #7.9
-:u_subc ta_reg_j, ta_reg_i is ta_opcode=0b10101101 & ta_reg_i & ta_reg_j unimpl
+:subc ta_reg_j, ta_reg_i is ta_opcode=0b10101101 & ta_reg_i & ta_reg_j {
+    subCarryFlags(ta_reg_i, ta_reg_j);
+    resultflags(ta_reg_i);
+}
 
 #7.10
 :subn ta_reg_j, ta_reg_i is ta_opcode=0b10101110 & ta_reg_i & ta_reg_j {
