@@ -1072,8 +1072,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.123
-stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { local tmp = val; export tmp; }
-stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { local tmp = val; export tmp; }
+stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { local tmp:1 = val; export tmp; }
+stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { local tmp:1 = val; export tmp; }
 
 :stilm stilm_ilm is td_opcode=0b10000111 & stilm_ilm {
     $(ILM) = stilm_ilm;
