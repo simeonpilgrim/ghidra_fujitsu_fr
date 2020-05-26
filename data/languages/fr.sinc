@@ -180,17 +180,19 @@ macro set_pc(addr) {
 
 tb_disp9: disp9 is tb_xs [ disp9 = tb_xs*2; ]{ local tmp:2 = disp9; export tmp; }
 
-tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { export disp10; }
+tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { local tmp:4 = disp10; export tmp; }
 
-tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { export udisp6; }
+tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { local tmp:4 = udisp6; export tmp; }
+
+tc_nx: nx is tc_x [ nx = 0xFFffFFf0 | tc_x; ] { local tmp:4 = nx; export tmp; }
 
 td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
 
-td_dir9: dir9 is td_x [dir9 = td_x*2;]{ export dir9; }
+td_dir9: dir9 is td_x [dir9 = td_x*2;]{ local tmp:4 = dir9; export tmp; }
 
-td_x_u10: u10 is td_x [u10 = td_x*4;] { export u10; }
+td_x_u10: u10 is td_x [u10 = td_x*4;] { local tmp:4 = u10; export tmp; }
 
-td_rel: s10 is td_xs [ s10 = td_xs*4; ]{ export s10; }
+td_rel: s10 is td_xs [ s10 = td_xs*4; ]{ local tmp:4 = s10; export tmp; }
 
 tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *[ram]:4 label12; }
 
@@ -210,9 +212,9 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.3
-:add2 tc_xs, tc_reg_i is tc_opcode=0b10100101 & tc_reg_i & tc_xs {
-    addflags(tc_reg_i,tc_xs);
-    tc_reg_i = tc_reg_i + tc_xs;  
+:add2 tc_nx, tc_reg_i is tc_opcode=0b10100101 & tc_reg_i & tc_nx {
+    addflags(tc_reg_i, tc_nx);
+    tc_reg_i = tc_reg_i + tc_nx;  
     resultflags(tc_reg_i);
 }
 
@@ -236,9 +238,9 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.7
-:addn2 tc_xs, tc_reg_i is tc_opcode=0b10100001 & tc_reg_i & tc_xs {
+:addn2 tc_nx, tc_reg_i is tc_opcode=0b10100001 & tc_reg_i & tc_nx {
     # no flags set
-    tc_reg_i = tc_reg_i + tc_xs;  
+    tc_reg_i = tc_reg_i + tc_nx;  
 }
 
 #7.8
@@ -272,10 +274,9 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.13
-:cmp2 tc_x, tc_reg_i is tc_opcode = 0b10101001 & tc_reg_i & tc_x {
-    local tmp:4 = 0xFFFFFF | tc_x;
-    subflags(tc_reg_i, tmp);
-    resultflags(tc_reg_i - tmp);
+:cmp2 tc_nx, tc_reg_i is tc_opcode = 0b10101001 & tc_reg_i & tc_nx {
+    subflags(tc_reg_i, tc_nx);
+    resultflags(tc_reg_i - tc_nx);
 }
 
 #7.14
@@ -1043,8 +1044,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.123
-stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { export val; }
-stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { export val; }
+stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { local tmp = val; export tmp; }
+stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { local tmp = val; export tmp; }
 
 :stilm stilm_ilm is td_opcode=0b10000111 & stilm_ilm {
     $(ILM) = stilm_ilm;
