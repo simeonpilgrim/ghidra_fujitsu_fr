@@ -1,7 +1,0 @@
-
-@define FR_VERSION "1"
-
-#TBR is normally at 0xFFC00 but Nikon puts it at 0xFDC00
-@define TBR_ADDR "0xdfc00"
-
-@include "fr.sinc"

@@ -4,11 +4,22 @@
   <language processor="FujitsuFR"
             endian="big"
             size="32"
-            variant="FR-1"
+            variant="FR-n"
             version="1.0"
-            slafile="fr-1.sla"
+            slafile="fr-n.sla"
             processorspec="fr.pspec"
-            id="Fujitsu:BE:32:FR-1">
+            id="Fujitsu:BE:32:FRn">
+    <description>Fujitsu FR processor 32-bit big-endian</description>
+    <compiler name="default" spec="fr.cspec" id="default"/>
+  </language> 
+  <language processor="FujitsuFR"
+            endian="big"
+            size="32"
+            variant="FR-8n"
+            version="1.0"
+            slafile="fr-8n.sla"
+            processorspec="fr.pspec"
+            id="Fujitsu:BE:32:FR8n">
     <description>Fujitsu FR processor 32-bit big-endian</description>
     <compiler name="default" spec="fr.cspec" id="default"/>
   </language>

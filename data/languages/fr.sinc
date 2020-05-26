@@ -1,4 +1,5 @@
 # All assembly defintions taken from: https://www.fujitsu.com/downloads/MICRO/fma/pdfmcu/CM71-00101-4E.pdf
+# and FR81 from: https://www.fujitsu.com/downloads/CN/fss/services/automotive/FR81S/progfr81-prog-manual-cm71-00105-1e.pdf
 
 define endian=big;
 define alignment=2;
@@ -6,13 +7,21 @@ define alignment=2;
 define space ram type=ram_space size=4 wordsize=1 default;
 define space register type=register_space size=4;
 
-define register offset=0 size=4
+define register offset=0x0000 size=4
 [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
 
+@if FR_VERSION == "80"
+define register offset=0x080 size=4
+[fr0 fr1 fr2 fr3 fr4 fr5 fr6 fr7 fr8 fr9 fr10 fr11 fr12 fr13 fr14 fr15];
+@endif
 
-define register offset=0x0080 size=4 [ mult_addr ];    # Special internal register for dealing with multiple stores/loads
-
+@if FR_VERSION == "1"
 define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh];
+@else
+define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh bp fcr esr dbr];
+@endif
+
+define register offset=0x180 size=4 [ mult_addr ];    # Special internal register for dealing with multiple stores/loads
 
 define register offset=0x200 size=4 
 [ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15];
@@ -25,6 +34,10 @@ define context ps
     s_f=(5,5)
     d6=(6,19)
     ilm4=(20,20)
+@if FR_VERSION == "80"
+	d21=(21,27)
+	ssr=(28,31)
+@endif
 ;
 
 
@@ -120,8 +133,19 @@ attach variables [ ta_reg_j ta_reg_js ta_reg_i ta_reg_is tb_reg_i tc_reg_i tc_re
 ];
 
 attach variables [ te_reg_s ta_reg_s ] [
+@if FR_VERSION == "1"
     tbr rp ssp usp mdh mdl _ _ _ _ _ _ _ _ _ _
+@else
+	tbr rp ssp usp mdh mdl bp fcr esr _ _ _ _ _ _ dbr
+@endif	
 ];
+
+@if FR_VERSION == "80TODO"
+attach variables [ t_frk t_frj t_fri ] [
+    fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7
+    fr8  fr9  fr10 fr11 fr12 fr13 fr14 fr15
+]
+@endif
 
 attach variables [ tw_crj ] [
     ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15
@@ -995,6 +1019,9 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
     r13 = r13 + 1;
 }
 
+@if FR_VERSION == "1"
+#FR30 & FR60 valid only
+
 #7.114
 :u_ldres "@"^tc_reg_i^"+," tc_x is tc_opcode=0b10111100 & tc_x & tc_reg_i unimpl
 
@@ -1029,6 +1056,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
     #SOME co-processor magic.. then
     tw_reg_i = tw_crj;
 }
+@endif
 
 #7.120
 :nop is tz_opcode = 0b1001111110100000 {}
