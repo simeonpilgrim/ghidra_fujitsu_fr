@@ -68,10 +68,8 @@ macro packflags(tmp) {
 define token instr16(16)
     ta_opcode = (8, 15)  # 0xFF00
     ta_reg_j = (4,7)     # 0x00F0
-    ta_reg_js = (4,7) signed # 0x00F0
     ta_reg_s = (4,7)     # 0x00F0 dedicated register Rs
     ta_reg_i = (0,3)     # 0x000F
-    ta_reg_is = (0,3) signed # 0x000F
 
     tb_opcode = (12,15)  # 0xF000
     tb_x = (4,11)        # 0x0FF0
@@ -91,7 +89,6 @@ define token instr16(16)
 
     te_opcode = (4,15)   # 0xFFF0
     te_reg_i = (0,3)     # 0x000F
-    te_reg_is = (0,3) signed # 0x000F
     te_reg_s = (0,3)     # 0x000F
 
     tf_opcode = (11,15)  # 0xF800
@@ -135,7 +132,7 @@ define token ext32(32)
     imm32 = (0,31)
 ;
 
-attach variables [ ta_reg_j ta_reg_js ta_reg_i ta_reg_is tb_reg_i tc_reg_i te_reg_i te_reg_is tx_reg_i tw_reg_i ] [
+attach variables [ ta_reg_j ta_reg_i tb_reg_i tc_reg_i te_reg_i tx_reg_i tw_reg_i ] [
     r0  r1  r2  r3  r4  r5  r6  r7
     r8  r9 r10 r11 r12  r13 r14 r15
 ];
@@ -447,8 +444,8 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 
 #7.34
-:mul ta_reg_js, ta_reg_is is ta_opcode=0b10101111 & ta_reg_is & ta_reg_js {
-    local res:8 = sext(ta_reg_is:4) * sext(ta_reg_js:4);
+:mul ta_reg_j, ta_reg_i is ta_opcode=0b10101111 & ta_reg_i & ta_reg_j {
+    local res:8 = sext(ta_reg_i) * sext(ta_reg_j);
     resultflags(res);
     
     mdl = res[0,32];
@@ -467,8 +464,8 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.36
-:mulh ta_reg_js, ta_reg_is is ta_opcode=0b10111111 & ta_reg_is & ta_reg_js {
-    local res:4 = sext(ta_reg_is:2) * sext(ta_reg_js:2);
+:mulh ta_reg_j, ta_reg_i is ta_opcode=0b10111111 & ta_reg_i & ta_reg_j {
+    local res:4 = sext(ta_reg_i:2) * sext(ta_reg_j:2);
     resultflags(res);
     mdl = res;
 }
@@ -482,10 +479,10 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.38
-:div0s te_reg_is is te_opcode=0b100101110100 & te_reg_is {
+:div0s te_reg_i is te_opcode=0b100101110100 & te_reg_i {
     local num:4 = mdl;
-    mdl = num s/ te_reg_is;
-    mdh = num s% te_reg_is;    
+    mdl = num s/ te_reg_i;
+    mdh = num s% te_reg_i;    
 }
 
 #7.39
@@ -576,16 +573,16 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 }
 
 #7.50
-:asr ta_reg_j, ta_reg_is is ta_opcode=0b10111010 & ta_reg_is & ta_reg_j {
+:asr ta_reg_j, ta_reg_i is ta_opcode=0b10111010 & ta_reg_i & ta_reg_j {
     local mask:4 = 0;
     local shift:4 = ta_reg_j & 0x1f;
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    CF = ( mask & ta_reg_is ) != 0;
+    CF = ( mask & ta_reg_i ) != 0;
 
-    ta_reg_is = ta_reg_is:4 >> shift;
-    resultflags(ta_reg_is:4);
+    ta_reg_i = ta_reg_i s>> shift;
+    resultflags(ta_reg_i);
 }
 
 #7.51
