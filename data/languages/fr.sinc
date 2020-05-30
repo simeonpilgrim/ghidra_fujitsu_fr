@@ -899,31 +899,33 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 #7.95
 :jmp^":D" "@"^te_reg_i is te_opcode=0b100111110000 & te_reg_i {
-    set_pc(te_reg_i);
+	local tmp = te_reg_i;
     delayslot(1);
-    goto [pc];
+    set_pc(tmp);
+    goto [tmp];
 }
 
 #7.96
 :call^":D" tf_label12 is tf_opcode=0b11011 & tf_label12 {
+    delayslot(1);
     rp = inst_start + 4;
     set_pc(tf_label12);
-    delayslot(1);
     call tf_label12;
 }
 
 #7.97
 :call^":D" "@"^te_reg_i is te_opcode=0b100111110001 & te_reg_i {
-    rp = inst_start + 4;
-    set_pc(te_reg_i);
+	local tmp = te_reg_i;
     delayslot(1);
-    call [pc];
+    rp = inst_start + 4;
+    set_pc(tmp);
+    call [tmp];
 }
 
 #7.98
 :ret^":D" is tz_opcode = 0b1001111100100000 {
-    set_pc(rp);
     delayslot(1);
+    set_pc(rp);
     return [pc];
 }
 
