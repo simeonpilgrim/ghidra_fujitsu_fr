@@ -21,6 +21,10 @@ define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh];
 define register offset=0x100 size=4 [pc ps tbr rp ssp usp mdl mdh bp fcr esr dbr];
 @endif
 
+# Flags
+define register offset=0x190 size=1 [ CF VF ZF NF IF SF ];
+
+
 define register offset=0x180 size=4 [ mult_addr ];    # Special internal register for dealing with multiple stores/loads
 
 define register offset=0x200 size=4 
@@ -47,14 +51,19 @@ define context ps
 @define ILM "ps[16,5]"
 
 # CCR Flags
-@define S_FLAG "ps[5,1]"
-@define I_FLAG "ps[4,1]"
-@define N_FLAG "ps[3,1]"
-@define Z_FLAG "ps[2,1]"
-@define V_FLAG "ps[1,1]"
-@define C_FLAG "ps[0,1]"
+macro unpackflags(tmp) {
+  SF = (tmp & 0x0020) != 0;
+  IF = (tmp & 0x0010) != 0;
+  NF = (tmp & 0x0008) != 0;
+  ZF = (tmp & 0x0004) != 0;
+  VF = (tmp & 0x0002) != 0;
+  CF = (tmp & 0x0001) != 0;
+}
 
-
+macro packflags(tmp) {
+  tmp = (tmp & 0xFFffFFc0) | (0x0020 * zext(SF&1)) | (0x0010 * zext(IF&1)) | (0x0008 * zext(NF&1))
+        | (0x0004 * zext(ZF&1)) | (0x0002 * zext(VF&1)) | (0x0001 * zext(CF&1));
+}
 
 define token instr16(16)
     ta_opcode = (8, 15)  # 0xFF00
@@ -156,40 +165,40 @@ sp: usp is s_f=1 & usp { export usp; }
 
 
 macro addflags(op1, op2) {     # Flags set by add instructions
-$(C_FLAG) = (carry(op1,op2));  # Check for carry
-$(V_FLAG) = (scarry(op1,op2)); # Check for signed carry
+CF = (carry(op1,op2));  # Check for carry
+VF = (scarry(op1,op2)); # Check for signed carry
 }
 
 macro subflags(op1, op2) {     # Flags set by sub instructions
-$(C_FLAG) = (op1 < op2);       # Check for carry
-$(V_FLAG) = sborrow(op1,op2);  # Check for signed carry
+ CF = (op1 < op2);       # Check for carry
+ VF = sborrow(op1,op2);  # Check for signed carry
 }
 
 
 macro resultflags(op1) {       # Set N,Z flag for results
- $(N_FLAG) = op1 s< 0;
- $(Z_FLAG) = op1 == 0;
+ NF = op1 s< 0;
+ ZF = op1 == 0;
 }
 
 #borrowed from ia.sinc
 macro addCarryFlags(op1, op2) {
-	local CFcopy = zext($(C_FLAG));
-	$(C_FLAG) = carry(op1, op2);
-	$(V_FLAG) = scarry(op1, op2);
+	local CFcopy = zext(CF);
+	CF = carry(op1, op2);
+	VF = scarry(op1, op2);
 	local result = op1 + op2;
-	$(C_FLAG) = $(C_FLAG) || carry( result, CFcopy );
-	$(V_FLAG) = $(V_FLAG) ^^ scarry( result, CFcopy );
+	CF = CF || carry( result, CFcopy );
+	VF = VF ^^ scarry( result, CFcopy );
     op1 = result + CFcopy;
 }
 
 #borrowed from ia.sinc
 macro subCarryFlags ( op1, op2 ) {
-	local CFcopy = zext($(C_FLAG));
-	$(C_FLAG) = op1 < op2;
-	$(V_FLAG) = sborrow( op1, op2 );
+	local CFcopy = zext(CF);
+	CF = op1 < op2;
+	VF = sborrow( op1, op2 );
 	local result = op1 - op2;
-	$(C_FLAG) = $(C_FLAG) || (result < CFcopy);
-	$(V_FLAG) = $(V_FLAG) ^^ sborrow( result, CFcopy );
+	CF = CF || (result < CFcopy);
+	VF = VF ^^ sborrow( result, CFcopy );
 	op1 = result - CFcopy;
 }
 
@@ -444,7 +453,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     
     mdl = res[0,32];
     mdh = res[32,32];
-    $(V_FLAG) = (mdh != 0) && (mdh != 0xffffffff); 
+    VF = (mdh != 0) && (mdh != 0xffffffff); 
 }
 
 #7.35
@@ -454,7 +463,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     
     mdl = res[0,32];
     mdh = res[32,32];
-    $(V_FLAG) = mdh != 0;
+    VF = mdh != 0;
 }
 
 #7.36
@@ -500,7 +509,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.44
 :lsl ta_reg_j, ta_reg_i is ta_opcode=0b10110110 & ta_reg_i & ta_reg_j {
     local shift = ta_reg_j[0,4];
-    $(C_FLAG) = (((0x100000000>>shift) & ta_reg_i) != 0) ;
+    CF = (((0x100000000>>shift) & ta_reg_i) != 0) ;
 
     ta_reg_i = ta_reg_i << shift;
     
@@ -509,7 +518,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 #7.45
 :lsl tc_x, tc_reg_i is tc_opcode=0b10110100 & tc_reg_i & tc_x {
-    $(C_FLAG) = (((0x100000000>>tc_x) & tc_reg_i) != 0) ;
+    CF = (((0x100000000>>tc_x) & tc_reg_i) != 0) ;
     
     tc_reg_i = tc_reg_i << tc_x;
     
@@ -518,7 +527,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 
 #7.46
 :lsl2 xp16, tc_reg_i is tc_opcode=0b10110101 & tc_reg_i & tc_x [ xp16 = tc_x + 16; ] {
-    $(C_FLAG) = (((0x100000000>>xp16) & tc_reg_i) != 0) ;
+    CF = (((0x100000000>>xp16) & tc_reg_i) != 0) ;
     
     tc_reg_i = tc_reg_i << xp16;
     
@@ -532,7 +541,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & ta_reg_i ) != 0;
+    CF = ( mask & ta_reg_i ) != 0;
 
     ta_reg_i = ta_reg_i >> shift;
     
@@ -546,7 +555,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
+    CF = ( mask & tc_reg_i ) != 0;
 
     tc_reg_i = tc_reg_i >> shift;
 
@@ -560,7 +569,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
+    CF = ( mask & tc_reg_i ) != 0;
 
     tc_reg_i = tc_reg_i >> shift;
 	resultflags(tc_reg_i); 
@@ -573,7 +582,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & ta_reg_is ) != 0;
+    CF = ( mask & ta_reg_is ) != 0;
 
     ta_reg_is = ta_reg_is:4 >> shift;
     resultflags(ta_reg_is:4);
@@ -586,7 +595,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
+    CF = ( mask & tc_reg_i ) != 0;
 
     tc_reg_i = tc_reg_i s>> shift;
     resultflags(tc_reg_i);
@@ -599,7 +608,7 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
     if( shift == 0 ) goto <skip_mask_set>;
         mask = 1 << (shift - 1);
     <skip_mask_set>
-    $(C_FLAG) = ( mask & tc_reg_i ) != 0;
+    CF = ( mask & tc_reg_i ) != 0;
 
     tc_reg_i = tc_reg_i s>> shift;
     resultflags(tc_reg_i);
@@ -671,6 +680,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 :ld "@r15+, ps" is tz_opcode=0b0000011110010000 & ld_62 & sp {
     build ld_62;
+	unpackflags(ps);
     sp = sp + 4;
 } 
 
@@ -747,6 +757,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.75
 :st ps, "@-r15" is tz_opcode = 0b0001011110010000 & ps & sp {
     sp = sp - 4;
+	packflags(ps);
     *:4 sp = ps;
 }
 
@@ -798,6 +809,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 #7.84
 :mov "ps," te_reg_i is te_opcode=0b000101110001 & te_reg_i {
+	packflags(ps);
     te_reg_i = ps;
 }
 
@@ -809,6 +821,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.86
 :mov te_reg_i, "ps" is te_opcode=0b00001110001 & te_reg_i {
     ps = te_reg_i;
+	unpackflags(ps);
 }
 
 #7.87
@@ -840,11 +853,12 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.91
 :int td_x is td_opcode=0b00011111 & td_x  {
     #ssp = ssp - 4;
+	#packflags(ps);
     #*[ram]:4 ssp = ps;
     #ssp = ssp - 4;
     #*[ram]:4 ssp = inst_next;
-    $(I_FLAG) = 0;
-    $(S_FLAG) = 0;
+    IF = 0;
+    SF = 0;
     local int_ea:4 = tbr + 0x3FC - (td_x * 4);
     set_pc(int_ea);
     #goto int_ea;
@@ -860,6 +874,7 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
     set_pc(ptr);
     sp = sp + 4;
     ps = *:4 sp;
+	unpackflags(ps);
     sp = sp + 4;
     return [ptr];
 }
@@ -867,20 +882,20 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.94 x16
 :bra td_label9 is td_op_a=0b1110 & td_op_b=0b0000 & td_label9 { goto td_label9; } 
 :bno td_label9 is td_op_a=0b1110 & td_op_b=0b0001 & td_label9 { } 
-:beq td_label9 is td_op_a=0b1110 & td_op_b=0b0010 & td_label9 { if( $(Z_FLAG)==1 ) goto td_label9; } 
-:bne td_label9 is td_op_a=0b1110 & td_op_b=0b0011 & td_label9 { if( $(Z_FLAG)==0 ) goto td_label9; } 
-:bc  td_label9 is td_op_a=0b1110 & td_op_b=0b0100 & td_label9 { if( $(C_FLAG)==1 ) goto td_label9; } 
-:bnc td_label9 is td_op_a=0b1110 & td_op_b=0b0101 & td_label9 { if( $(C_FLAG)==0 ) goto td_label9; } 
-:bn  td_label9 is td_op_a=0b1110 & td_op_b=0b0110 & td_label9 { if( $(N_FLAG)==1 ) goto td_label9; } 
-:bp  td_label9 is td_op_a=0b1110 & td_op_b=0b0111 & td_label9 { if( $(N_FLAG)==0 ) goto td_label9; } 
-:bv  td_label9 is td_op_a=0b1110 & td_op_b=0b1000 & td_label9 { if( $(V_FLAG)==1 ) goto td_label9; } 
-:bnv td_label9 is td_op_a=0b1110 & td_op_b=0b1001 & td_label9 { if( $(V_FLAG)==0 ) goto td_label9; } 
-:blt td_label9 is td_op_a=0b1110 & td_op_b=0b1010 & td_label9 { if( ($(V_FLAG)^$(N_FLAG))==1 ) goto td_label9; } 
-:bge td_label9 is td_op_a=0b1110 & td_op_b=0b1011 & td_label9 { if( ($(V_FLAG)^$(N_FLAG))==0 ) goto td_label9; } 
-:ble td_label9 is td_op_a=0b1110 & td_op_b=0b1100 & td_label9 { if( (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG))==1 ) goto td_label9; } 
-:bgt td_label9 is td_op_a=0b1110 & td_op_b=0b1101 & td_label9 { if( (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG))==0 ) goto td_label9; } 
-:bls td_label9 is td_op_a=0b1110 & td_op_b=0b1110 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==1 ) goto td_label9; } 
-:bhi td_label9 is td_op_a=0b1110 & td_op_b=0b1111 & td_label9 { if( ($(C_FLAG)|$(Z_FLAG))==0 ) goto td_label9; } 
+:beq td_label9 is td_op_a=0b1110 & td_op_b=0b0010 & td_label9 { if( ZF==1 ) goto td_label9; } 
+:bne td_label9 is td_op_a=0b1110 & td_op_b=0b0011 & td_label9 { if( ZF==0 ) goto td_label9; } 
+:bc  td_label9 is td_op_a=0b1110 & td_op_b=0b0100 & td_label9 { if( CF==1 ) goto td_label9; } 
+:bnc td_label9 is td_op_a=0b1110 & td_op_b=0b0101 & td_label9 { if( CF==0 ) goto td_label9; } 
+:bn  td_label9 is td_op_a=0b1110 & td_op_b=0b0110 & td_label9 { if( NF==1 ) goto td_label9; } 
+:bp  td_label9 is td_op_a=0b1110 & td_op_b=0b0111 & td_label9 { if( NF==0 ) goto td_label9; } 
+:bv  td_label9 is td_op_a=0b1110 & td_op_b=0b1000 & td_label9 { if( VF==1 ) goto td_label9; } 
+:bnv td_label9 is td_op_a=0b1110 & td_op_b=0b1001 & td_label9 { if( VF==0 ) goto td_label9; } 
+:blt td_label9 is td_op_a=0b1110 & td_op_b=0b1010 & td_label9 { if( (VF^NF)==1 ) goto td_label9; } 
+:bge td_label9 is td_op_a=0b1110 & td_op_b=0b1011 & td_label9 { if( (VF^NF)==0 ) goto td_label9; } 
+:ble td_label9 is td_op_a=0b1110 & td_op_b=0b1100 & td_label9 { if( ((VF^NF)|ZF)==1 ) goto td_label9; } 
+:bgt td_label9 is td_op_a=0b1110 & td_op_b=0b1101 & td_label9 { if( ((VF^NF)|ZF)==0 ) goto td_label9; } 
+:bls td_label9 is td_op_a=0b1110 & td_op_b=0b1110 & td_label9 { if( (CF|ZF)==1 ) goto td_label9; } 
+:bhi td_label9 is td_op_a=0b1110 & td_op_b=0b1111 & td_label9 { if( (CF|ZF)==0 ) goto td_label9; } 
 
 
 #7.95
@@ -916,20 +931,20 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.99 x16
 :bra^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0000 & td_label9 { delayslot(1); goto td_label9; } 
 :bno^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0001 & td_label9 { delayslot(1); } 
-:beq^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0010 & td_label9 { tmp = $(Z_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bne^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0011 & td_label9 { tmp = $(Z_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:bc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0100 & td_label9 { tmp = $(C_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bnc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0101 & td_label9 { tmp = $(C_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:bn^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0110 & td_label9 { tmp = $(N_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bp^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0111 & td_label9 { tmp = $(N_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:bv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1000 & td_label9 { tmp = $(V_FLAG); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bnv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1001 & td_label9 { tmp = $(V_FLAG); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:blt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1010 & td_label9 { tmp = ($(V_FLAG)^$(N_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bge^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1011 & td_label9 { tmp = ($(V_FLAG)^$(N_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:ble^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1100 & td_label9 { tmp = (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bgt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1101 & td_label9 { tmp = (($(V_FLAG)^$(N_FLAG))|$(Z_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
-:bls^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1110 & td_label9 { tmp = ($(C_FLAG)|$(Z_FLAG)); delayslot(1); if( tmp==1 ) goto td_label9; } 
-:bhi^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1111 & td_label9 { tmp = ($(C_FLAG)|$(Z_FLAG)); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:beq^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0010 & td_label9 { tmp = ZF; delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bne^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0011 & td_label9 { tmp = ZF; delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0100 & td_label9 { tmp = CF; delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bnc^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0101 & td_label9 { tmp = CF; delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bn^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0110 & td_label9 { tmp = NF; delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bp^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b0111 & td_label9 { tmp = NF; delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1000 & td_label9 { tmp = VF; delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bnv^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1001 & td_label9 { tmp = VF; delayslot(1); if( tmp==0 ) goto td_label9; } 
+:blt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1010 & td_label9 { tmp = (VF^NF); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bge^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1011 & td_label9 { tmp = (VF^NF); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:ble^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1100 & td_label9 { tmp = ((VF^NF)|ZF); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bgt^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1101 & td_label9 { tmp = ((VF^NF)|ZF); delayslot(1); if( tmp==0 ) goto td_label9; } 
+:bls^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1110 & td_label9 { tmp = (CF|ZF); delayslot(1); if( tmp==1 ) goto td_label9; } 
+:bhi^":D" td_label9 is td_op_a=0b1111 & td_op_b=0b1111 & td_label9 { tmp = (CF|ZF); delayslot(1); if( tmp==0 ) goto td_label9; } 
 
 #7.100
 :dmov "@"^td_x_u10, "r13" is td_opcode=0b00001000 & td_x_u10 {
