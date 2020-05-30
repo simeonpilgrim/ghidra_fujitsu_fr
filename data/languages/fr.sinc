@@ -689,7 +689,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.64
 :lduh "@(r13," ta_reg_j^")," ta_reg_i is ta_opcode=0b00000001 & ta_reg_i & ta_reg_j {
     local ea:4 = r13 + ta_reg_j;
-    ta_reg_i = *:2 ea;
+	local tmp:2 = *:2 ea;
+    ta_reg_i = zext(tmp);
 }
 
 #7.65
@@ -768,7 +769,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 :sth ta_reg_i, "@(r13," ta_reg_j ^")" is ta_opcode=0b00010001 & ta_reg_i & ta_reg_j
 {
     local ea:4 = r13 + ta_reg_j;
-    *:2 ea = ta_reg_i[0,16];
+	local tmp:2 = ta_reg_i:2;
+    *:2 ea = tmp;
 }
 
 #7.78
