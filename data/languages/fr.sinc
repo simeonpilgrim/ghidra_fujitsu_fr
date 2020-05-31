@@ -32,21 +32,10 @@ define register offset=0x200 size=4
 
 define register offset=0x400 size=1 [nop_dummy];
 
-define context ps
-    d0=(0,3)
-    i_f=(4,4)
-    s_f=(5,5)
-    d6=(6,19)
-    ilm4=(20,20)
-@if FR_VERSION == "80"
-	d21=(21,27)
-	ssr=(28,31)
-@endif
-;
 
 
 # PS Parts
-@define CCR "ps[0,8]"
+#@define CCR "ps[0,8]"
 @define SCR "ps[8,3]"
 @define ILM "ps[16,5]"
 
@@ -156,19 +145,23 @@ attach variables [ tw_crj ] [
     ccr0 ccr1 ccr2 ccr3 ccr4 ccr5 ccr6 ccr7 ccr8 ccr9 ccr10 ccr11 ccr12 ccr13 ccr14 ccr15
 ];
 
-
-sp: ssp is s_f=0 & ssp { export ssp; }
-sp: usp is s_f=1 & usp { export usp; }
+@ifdef both_sp
+sp: ssp is SF=0 & ssp { export ssp; }
+sp: usp is SF=1 & usp { export usp; }
+@else
+# It's not really correct to not handle system SP verse user SP, but it almost doesn't matter..
+sp: r15 is r15 { export r15; }
+@endif
 
 
 macro addflags(op1, op2) {     # Flags set by add instructions
-CF = (carry(op1,op2));  # Check for carry
-VF = (scarry(op1,op2)); # Check for signed carry
+	CF = (carry(op1,op2));  # Check for carry
+	VF = (scarry(op1,op2)); # Check for signed carry
 }
 
 macro subflags(op1, op2) {     # Flags set by sub instructions
- CF = (op1 < op2);       # Check for carry
- VF = sborrow(op1,op2);  # Check for signed carry
+	CF = (op1 < op2);       # Check for carry
+	VF = sborrow(op1,op2);  # Check for signed carry
 }
 
 
@@ -662,8 +655,12 @@ te_reg_i_inc: is te_reg_i & sp { sp = sp + 4; }
 }
 
 #7.61
-ld_61: "A" is te_reg_s=3 & s_f=0 { nop_dummy = nop_dummy; } # ssp
-ld_61: "B" is te_reg_s=4 & s_f=1 { nop_dummy = nop_dummy; } # usp
+@ifdef both_sp
+	ld_61: "A" is te_reg_s=3 & SF=0 { nop_dummy = nop_dummy; } # ssp
+	ld_61: "B" is te_reg_s=4 & SF=1 { nop_dummy = nop_dummy; } # usp
+@else
+	ld_61: "A" is te_reg_s=3 { nop_dummy = nop_dummy; } # ssp
+@endif
 ld_61: "C" is te_reg_s & sp { sp = sp + 4; }
 
 :ld "@r15+," te_reg_s is te_opcode=0b000001111000 & te_reg_s & ld_61 & sp {
@@ -672,12 +669,17 @@ ld_61: "C" is te_reg_s & sp { sp = sp + 4; }
 }
 
 #7.62
+@ifdef both_sp
 ld_62: "A" is ilm4=0 & sp { ps = *:4 sp; }
 ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 :ld "@r15+, ps" is tz_opcode=0b0000011110010000 & ld_62 & sp {
     build ld_62;
-	unpackflags(ps);
+@else
+:ld "@r15+, ps" is tz_opcode=0b0000011110010000 & sp {
+    ps = *:4 sp;
+@endif
+    unpackflags(ps);
     sp = sp + 4;
 } 
 
@@ -1087,21 +1089,33 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 #7.121
 :andccr td_x is td_opcode=0b10000011 & td_x {
-    $(CCR) = $(CCR) & td_x;
+	local tmp:2;
+	packflags(tmp);
+	tmp = tmp & td_x;
+	unpackflags(tmp);
 }
 
 #7.122
 :orccr td_x is td_opcode=0b10010011 & td_x {
-    $(CCR) = $(CCR) | td_x;
+	local tmp:2;
+	packflags(tmp);
+	tmp = tmp | td_x;
+	unpackflags(tmp);
 }
 
 #7.123
-stilm_ilm: val is td_x & i_f=0 [ val = td_x&0x1F; ] { local tmp:1 = val; export tmp; }
-stilm_ilm: val is td_x & i_f=1 [ val = td_x|0x10; ] { local tmp:1 = val; export tmp; }
+@ifdef both_sp
+stilm_ilm: val is td_x & IF=0 [ val = td_x&0x1F; ] { local tmp:1 = val; export tmp; }
+stilm_ilm: val is td_x & IF=1 [ val = td_x|0x10; ] { local tmp:1 = val; export tmp; }
 
 :stilm stilm_ilm is td_opcode=0b10000111 & stilm_ilm {
     $(ILM) = stilm_ilm;
 }
+@else
+:stilm td_x is td_opcode=0b10000111 & td_x {
+    $(ILM) = td_x;
+}
+@endif
 
 #7.124
 :addsp td_rel is td_opcode=0b10100011 & td_xs & td_rel & sp {
