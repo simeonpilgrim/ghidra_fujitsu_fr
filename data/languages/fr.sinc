@@ -213,7 +213,7 @@ tb_disp10: disp10 is tb_xs [ disp10 = tb_xs*4; ] { local tmp:4 = disp10; export 
 
 tc_udisp6: udisp6 is tc_x [ udisp6 = tc_x*4; ] { local tmp:4 = udisp6; export tmp; }
 
-tc_nx: nx is tc_x [ nx = 0xFFffFFf0 | tc_x; ] { local tmp:4 = nx; export tmp; }
+tc_nx: nx is tc_x [ nx = -16 + tc_x; ] { local tmp:4 = nx; export tmp; }
 
 td_label9: label9 is td_xs [ label9 = inst_next + (td_xs*2); ]{ export *[ram]:4 label9; }
 
