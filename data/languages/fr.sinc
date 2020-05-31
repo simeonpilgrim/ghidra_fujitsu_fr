@@ -619,13 +619,13 @@ tf_label12: label12 is tf_offs [ label12 = inst_next + (tf_offs*2); ] { export *
 #7.54
 :ldi^":"^20 imm20, tx_reg_i is tx_opcode=0b10011011 & tx_reg_i & tx_xl & tx_xh [ imm20 = tx_xl + (tx_xh<<16); ]
 {
-    tx_reg_i = imm20;
+    tx_reg_i = zext(imm20:3);
 }
 
 #7.55
 :ldi^":"^8 tb_x,tb_reg_i is tb_opcode=0b1100 & tb_reg_i & tb_x
 {
-    tb_reg_i = tb_x;
+    tb_reg_i = zext(tb_x:1);
 }
 
 #7.56
@@ -683,7 +683,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 
 #7.63
 :lduh @^ta_reg_j, ta_reg_i is ta_opcode=0b00000101 & ta_reg_i & ta_reg_j {
-    ta_reg_i = *:2 ta_reg_j;
+	local tmp:2 = *:2 ta_reg_j;
+    ta_reg_i = zext(tmp);
 }
 
 #7.64
@@ -696,24 +697,28 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.65
 :lduh "@(r14," tb_disp9^")," tb_reg_i is tb_opcode=0b0100 & tb_reg_i & tb_disp9 {
     local ea:4 = r14 + sext(tb_disp9);
-    tb_reg_i = *:2 ea;
+	local tmp:2 = *:2 ea;
+    tb_reg_i = zext(tmp);
 }
 
 #7.66
 :ldub @^ta_reg_j, ta_reg_i is ta_opcode=0b00000110 & ta_reg_i & ta_reg_j {
-    ta_reg_i = zext(*:1 ta_reg_j);
+	local tmp:1 = *:1 ta_reg_j;
+    ta_reg_i = zext(tmp);
 }
 
 #7.67
 :ldub "@(r13," ta_reg_j^")," ta_reg_i is ta_opcode=0b00000010 & ta_reg_i & ta_reg_j {
     local ea:4 = r13 + ta_reg_j;
-    ta_reg_i = *:1 ea;
+	local tmp:1 = *:1 ea;
+    ta_reg_i = zext(tmp);
 }
 
 #7.68
 :ldub "@(r14," tb_x^")," tb_reg_i is tb_opcode=0b0110 & tb_reg_i & tb_x {
     local ea:4 = r14 + tb_x;
-    tb_reg_i = *:1 ea;
+	local tmp:1 = *:1 ea;
+    tb_reg_i = zext(tmp);
 }
 
 #7.69
@@ -762,38 +767,42 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.76
 :sth ta_reg_i,@ta_reg_j is ta_opcode=0b00010101 & ta_reg_i & ta_reg_j
 {
-    *:2 ta_reg_j = ta_reg_i;
+    *:2 ta_reg_j = trunc(ta_reg_i);
 }
 
 #7.77
 :sth ta_reg_i, "@(r13," ta_reg_j ^")" is ta_opcode=0b00010001 & ta_reg_i & ta_reg_j
 {
     local ea:4 = r13 + ta_reg_j;
-	local tmp:2 = ta_reg_i:2;
+	local tmp:2 = trunc(ta_reg_i);
     *:2 ea = tmp;
 }
 
 #7.78
 :sth tb_reg_i, "@(r14," tb_disp9 ^")" is tb_opcode=0b0101 & tb_reg_i & tb_disp9 {
     local ea = r14 + sext(tb_disp9);
-    *:2 ea = tb_reg_i[0,16];
+	local tmp:2 = trunc(tb_reg_i);
+    *:2 ea = tmp;
 }
 
 #7.79
 :stb ta_reg_i, @^ ta_reg_j is ta_opcode=0b00010110 & ta_reg_i & ta_reg_j {
-    *:1 ta_reg_j = ta_reg_i[0,8];
+	local tmp:1 = trunc(ta_reg_i);
+    *:1 ta_reg_j = tmp;
 }
 
 #7.80
 :stb ta_reg_i, "@(r13," ta_reg_j ^")" is ta_opcode=0b00010010 & ta_reg_i & ta_reg_j {
     local ea = r13 + ta_reg_j;
-    *:1 ea = ta_reg_i[0,8];
+	local tmp:1 = trunc(ta_reg_i);
+    *:1 ea = tmp;
 }
 
 #7.81
 :stb tb_reg_i, "@(r14," tb_xs ^")" is tb_opcode=0b0111 & tb_xs & tb_reg_i {
     local ea = r14 + tb_xs;
-    *:1 ea = tb_reg_i[0,8];    
+	local tmp:1 = trunc(tb_reg_i);
+    *:1 ea = tmp;    
 }
 
 #7.82
