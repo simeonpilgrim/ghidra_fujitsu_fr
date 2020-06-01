@@ -769,41 +769,41 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 #7.76
 :sth ta_reg_i,@ta_reg_j is ta_opcode=0b00010101 & ta_reg_i & ta_reg_j
 {
-    *:2 ta_reg_j = trunc(ta_reg_i);
+    *:2 ta_reg_j = ta_reg_i:2;
 }
 
 #7.77
 :sth ta_reg_i, "@(r13," ta_reg_j ^")" is ta_opcode=0b00010001 & ta_reg_i & ta_reg_j
 {
     local ea:4 = r13 + ta_reg_j;
-	local tmp:2 = trunc(ta_reg_i);
+	local tmp:2 = ta_reg_i:2;
     *:2 ea = tmp;
 }
 
 #7.78
 :sth tb_reg_i, "@(r14," tb_disp9 ^")" is tb_opcode=0b0101 & tb_reg_i & tb_disp9 {
     local ea = r14 + sext(tb_disp9);
-	local tmp:2 = trunc(tb_reg_i);
+	local tmp:2 = tb_reg_i:2;
     *:2 ea = tmp;
 }
 
 #7.79
 :stb ta_reg_i, @^ ta_reg_j is ta_opcode=0b00010110 & ta_reg_i & ta_reg_j {
-	local tmp:1 = trunc(ta_reg_i);
+	local tmp:1 = ta_reg_i:1;
     *:1 ta_reg_j = tmp;
 }
 
 #7.80
 :stb ta_reg_i, "@(r13," ta_reg_j ^")" is ta_opcode=0b00010010 & ta_reg_i & ta_reg_j {
     local ea = r13 + ta_reg_j;
-	local tmp:1 = trunc(ta_reg_i);
+	local tmp:1 = ta_reg_i:1;
     *:1 ea = tmp;
 }
 
 #7.81
 :stb tb_reg_i, "@(r14," tb_xs ^")" is tb_opcode=0b0111 & tb_xs & tb_reg_i {
     local ea = r14 + tb_xs;
-	local tmp:1 = trunc(tb_reg_i);
+	local tmp:1 = tb_reg_i:1;
     *:1 ea = tmp;    
 }
 
