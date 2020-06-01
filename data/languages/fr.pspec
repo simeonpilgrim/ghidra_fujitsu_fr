@@ -8,4 +8,12 @@
       <set name="IF" val="0"/>
     </tracked_set>
   </context_data>
+  <register_data>
+    <register name="SF" group="FLAGS"/>
+    <register name="IF" group="FLAGS"/>
+    <register name="NF" group="FLAGS"/>
+    <register name="ZF" group="FLAGS"/>
+    <register name="VF" group="FLAGS"/>
+    <register name="CF" group="FLAGS"/>
+  </register_data>
 </processor_spec>
