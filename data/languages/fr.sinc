@@ -723,8 +723,8 @@ ld_62: "B" is ilm4=1 & sp { ps = *:4 sp; ps[20,1] = 1; }
 }
 
 #7.68
-:ldub "@(r14," tb_x^")," tb_reg_i is tb_opcode=0b0110 & tb_reg_i & tb_x {
-    local ea:4 = r14 + tb_x;
+:ldub "@(r14," tb_xs^")," tb_reg_i is tb_opcode=0b0110 & tb_reg_i & tb_xs {
+    local ea:4 = r14 + tb_xs;
 	local tmp:1 = *:1 ea;
     tb_reg_i = zext(tmp);
 }
