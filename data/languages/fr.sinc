@@ -4,6 +4,12 @@
 define endian=big;
 define alignment=2;
 
+define pcodeop Srch0;
+define pcodeop Srch1;
+define pcodeop SrchC;
+
+
+
 define space ram type=ram_space size=4 wordsize=1 default;
 define space register type=register_space size=4;
 
@@ -1292,3 +1298,21 @@ st_reg_list_b:  r8^"," st_rl_b1  is st_rl_b1 & td_x0707=1 & r8                 {
     ta_reg_i = zext(*:1 ta_reg_j);
     *:1 ta_reg_j = tmp;
 }
+
+:srch0 te_reg_i is te_opcode=0b100101111100 & te_reg_i 
+@if FR_VERSION == "1"
+unimpl
+@else
+{
+	te_reg_i = Srch0(te_reg_i);
+}
+@endif
+
+:srch1 te_reg_i is te_opcode=0b100101111101 & te_reg_i 
+@if FR_VERSION == "1"
+unimpl
+@else
+{
+	te_reg_i = Srch1(te_reg_i);
+}
+@endif
