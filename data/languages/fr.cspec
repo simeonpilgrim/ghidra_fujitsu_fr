@@ -28,7 +28,7 @@
     <returnaddress>
         <register name="rp"/>
     </returnaddress>
-    <stackpointer register="r15" space="ram"/>
+    <stackpointer register="r15" space="ram" growth="negative"/>
     <default_proto>
         <prototype name="__stdcall" extrapop="0" stackshift="0">
             <input>
@@ -52,6 +52,9 @@
                 <pentry minsize="1" maxsize="4" extension="inttype">
                     <register name="r4"/>
                 </pentry>
+				<pentry minsize="5" maxsize="8">
+					<addr space="join" piece1="r4" piece2="r5"/>
+				</pentry>
             </output>
             <unaffected>
                 <register name="r8"/>
